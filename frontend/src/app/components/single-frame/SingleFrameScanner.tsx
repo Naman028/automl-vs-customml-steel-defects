@@ -1,8 +1,7 @@
 import React, { useRef, useState } from "react";
 import {
   PredictionResult,
-  getChatbotResponse,
-  getMetalIdentificationResponse,
+  askAssistant,
   scanImage,
 } from "../../services/api";
 import { usePredictionHistory } from "../../contexts/PredictionHistoryContext";
@@ -17,13 +16,20 @@ import { SingleFrameErrorBanner } from "./SingleFrameErrorBanner";
 const DEFECT_QUESTIONS = [
   "What causes this defect?",
   "How can it be prevented?",
-  "Is it repairable?",
+  "How serious is this defect?",
+  "What should operator check first?",
+  "What immediate corrective action is recommended?",
+  "How to confirm this in lab?",
+  "Is this acceptable or should it be rejected?",
 ];
 const METAL_QUESTIONS = [
-  "What is steel?",
-  "Tell me about aluminum",
+  "What are the 6 steel surface defects?",
+  "How to detect Rolled-in Scale?",
+  "How to identify Pitted Surface?",
+  "How to prevent Inclusion defects?",
+  "What causes Crazing in steel?",
+  "How can scratches be prevented?",
   "How to identify copper?",
-  "Which metal is strongest?",
 ];
 
 export const SingleFrameScanner: React.FC = () => {
@@ -65,7 +71,7 @@ export const SingleFrameScanner: React.FC = () => {
     } catch (error) {
       console.error("Prediction error:", error);
       setPredictionError(
-        "Failed to get prediction from backend. Please ensure the backend server is running on http://localhost:8000 and try again.",
+        "Failed to get prediction from backend. Please ensure the backend server is running on http://localhost:8001 and try again.",
       );
     } finally {
       setScanning(false);
@@ -99,16 +105,14 @@ export const SingleFrameScanner: React.FC = () => {
     if (!chatQuestion.trim()) return;
     setChatLoading(true);
     try {
-      const response =
-        predictions && (predictions.custom || predictions.automl)
-          ? await getChatbotResponse(
-              predictions.custom?.defect ||
-                predictions.automl?.defect ||
-                "unknown",
-              chatQuestion,
-            )
-          : await getMetalIdentificationResponse(chatQuestion);
-      setChatResponse(response);
+      const selectedPrediction = predictions?.custom || predictions?.automl;
+      const response = await askAssistant(chatQuestion, selectedPrediction);
+      setChatResponse(response.answer);
+    } catch (error) {
+      console.error("Assistant error:", error);
+      setChatResponse(
+        "Assistant backend request failed. Ensure backend is running and try again.",
+      );
     } finally {
       setChatLoading(false);
     }

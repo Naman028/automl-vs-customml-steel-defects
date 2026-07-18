@@ -6,6 +6,7 @@
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
 venv/
 *.egg-info/
@@ -25,4 +26,11 @@ build/
 
 # Data
 **/neu_final_dataset/
+**/neu_final_dataset_fullnames/
+backend/assistant/neu_defect_assistant_dataset/
 **/*.zip
+
+# Reproducible local reports and temporary test output
+backend/models/CustomML/outputs_refined/
+backend/models/CustomML/outputs/best_overfit_backup.pt
+testsprite_tests/

@@ -1,6 +1,6 @@
-Cr
-In
-Sc
-PS
-RS
-Pa
+Crazing
+Inclusion
+Scratches
+Rolled_in_Scale
+Pitted_Surface
+Patches

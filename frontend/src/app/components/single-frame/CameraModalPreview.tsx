@@ -3,7 +3,7 @@ import { Camera } from 'lucide-react';
 import { Button } from '../ui/button';
 
 type CameraModalPreviewProps = {
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   error: string | null;
   scanning: boolean;
   onRetry: () => void;

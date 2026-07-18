@@ -33,13 +33,23 @@ const buildThresholdSeries = (
 const buildAvgPrSeries = (
   prCurves: Record<string, { precision: number[]; recall: number[]; thresholds: number[] }> = {}
 ) => {
-  const rows: Array<{ recall: number; precision: number }> = [];
+  const buckets = new Map<number, { sum: number; count: number }>();
   Object.values(prCurves).forEach((curve) => {
     const n = Math.min(curve.recall.length, curve.precision.length);
     for (let i = 0; i < n; i += 1) {
-      rows.push({ recall: curve.recall[i] * 100, precision: curve.precision[i] * 100 });
+      const recallPct = Math.max(0, Math.min(100, curve.recall[i] * 100));
+      const precisionPct = Math.max(0, Math.min(100, curve.precision[i] * 100));
+      const recallBucket = Math.round(recallPct);
+      const prev = buckets.get(recallBucket) ?? { sum: 0, count: 0 };
+      buckets.set(recallBucket, { sum: prev.sum + precisionPct, count: prev.count + 1 });
     }
   });
+  const rows: Array<{ recall: number; precision: number }> = Array.from(buckets.entries()).map(
+    ([recall, agg]) => ({
+      recall,
+      precision: agg.count > 0 ? agg.sum / agg.count : 0,
+    })
+  );
   rows.sort((a, b) => a.recall - b.recall);
   return rows;
 };
@@ -225,8 +235,8 @@ export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> =
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={automlPr}>
               <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-              <XAxis dataKey="recall" domain={[0, 100]} />
-              <YAxis dataKey="precision" domain={[0, 100]} />
+              <XAxis type="number" dataKey="recall" domain={[0, 100]} tickCount={6} allowDecimals={false} />
+              <YAxis type="number" dataKey="precision" domain={[0, 100]} tickCount={6} allowDecimals={false} />
               <Tooltip />
               <Line type="monotone" dataKey="precision" stroke="#3b82f6" dot={false} />
             </LineChart>
@@ -237,8 +247,8 @@ export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> =
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={customPr}>
               <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-              <XAxis dataKey="recall" domain={[0, 100]} />
-              <YAxis dataKey="precision" domain={[0, 100]} />
+              <XAxis type="number" dataKey="recall" domain={[0, 100]} tickCount={6} allowDecimals={false} />
+              <YAxis type="number" dataKey="precision" domain={[0, 100]} tickCount={6} allowDecimals={false} />
               <Tooltip />
               <Line type="monotone" dataKey="precision" stroke="#10b981" dot={false} />
             </LineChart>

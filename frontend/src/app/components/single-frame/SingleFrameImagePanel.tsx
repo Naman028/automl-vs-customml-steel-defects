@@ -14,7 +14,7 @@ type SingleFrameImagePanelProps = {
   capturedImage: string | null;
   scanning: boolean;
   modelSelection: ModelSelection;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   onReset: () => void;
   onCameraOpen: () => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -32,8 +32,14 @@ export const SingleFrameImagePanel: React.FC<SingleFrameImagePanelProps> = ({
   onModelChange,
 }) => {
   return (
-    <div className="space-y-4 max-w-[560px] mx-auto lg:mx-0">
-      <div className="relative bg-slate-950 rounded-xl overflow-hidden aspect-square max-h-[560px] border-2 border-slate-200 dark:border-slate-700">
+    <div className="space-y-4 max-w-[560px] mx-auto lg:mx-0 h-full">
+      <div
+        className={`relative bg-slate-950 rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 ${
+          capturedImage
+            ? "aspect-square lg:aspect-auto lg:h-full"
+            : "aspect-square max-h-[560px]"
+        }`}
+      >
         {capturedImage ? (
           <>
             <img
