@@ -1,44 +1,210 @@
-What the model is trained on:
-- Dataset: NEU surface defect dataset (folder name: neu_final_dataset).
-- Expected structure: neu_final_dataset/{train,val,test}/{class_name}/image files.
-- Classes (from ImageFolder folders): Cr, In, PS, Pa, RS, Sc.
-- Model: ResNet18 fine-tuned for the dataset's class count.
+﻿CustomML Training and Evaluation Guide (with code-line references)
 
-Local verification steps (CPU works):
+Files covered:
+- trainer: backend/models/CustomML/trainer/train.py
+- evaluator: backend/models/CustomML/eval_custom_pt.py
 
-  Create venv and install deps:
-   python -m venv .venv
-   .venv\Scripts\activate  (Windows)
-   pip install -r requirements.txt
+==================================================
+1) DATA LOADING + AUGMENTATION
+==================================================
 
-Run training:
-   python -m trainer.train --data_dir path/to/neu_final_dataset --output_dir outputs --epochs 8
+Code:
+- train.py lines 22-52
 
-Outputs:
-- outputs/best.pt
-- outputs/metrics.json
+What happens:
+- Expects dataset layout: data_dir/{train,val,test}/{class}/images
+- Training split uses strong augmentations:
+  - RandomResizedCrop
+  - HorizontalFlip
+  - Rotation
+  - ColorJitter
+  - RandomPerspective
+- Validation/test use deterministic resize + normalize.
+- Uses torchvision ImageFolder to infer class names from folders.
 
-Evaluate (precision/recall/F1):
-  The training run evaluates on the test split automatically and writes metrics to outputs/metrics.json.
-  Open outputs/metrics.json to see per-class precision/recall/F1, macro/weighted averages, and confusion matrix.
+Why:
+- Augmentation improves generalization.
+- Deterministic eval transforms keep metrics stable/reproducible.
 
-Vertex AI steps (clean, repeatable):
-1) Enable APIs: Vertex AI, Cloud Storage.
-2) Create a GCS bucket in your region.
-3) Upload dataset to GCS:
-   gsutil -m cp -r neu_final_dataset gs://YOUR_BUCKET/data/neu_final_dataset
-4) Package the trainer (this folder already contains setup.py and trainer/__init__.py).
-5) Submit a custom job:
-   gcloud ai custom-jobs create ^
-     --region=YOUR_REGION ^
-     --display-name=defect-train ^
-     --python-module=trainer.train ^
-     --package-path=. ^
-     --container-uri=us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310 ^
-     --args="--data_dir=gs://YOUR_BUCKET/data/neu_final_dataset,--epochs=8" ^
-     --base-output-dir=gs://YOUR_BUCKET/vertex_outputs/
+==================================================
+2) MODEL SETUP
+==================================================
 
-Notes:
-- When AIP_MODEL_DIR is set by Vertex, outputs are written there automatically.
-- GCS data paths are supported; data is downloaded to /tmp/data during training.
-- Use TRAIN_BATCH_SIZE and TRAIN_NUM_WORKERS env vars to match GPU/CPU on Vertex.
+Code:
+- train.py lines 226-233
+
+What happens:
+- Loads ResNet18 (pretrained unless --no_pretrained).
+- Replaces final FC layer with number of dataset classes.
+- Uses:
+  - Loss: CrossEntropyLoss
+  - Optimizer: AdamW
+
+Why:
+- ResNet18 is lightweight and reliable.
+- Final layer swap adapts ImageNet backbone to defect classes.
+
+==================================================
+3) TRAINING LOOP + BEST CHECKPOINT
+==================================================
+
+Code:
+- train.py lines 238-263
+
+What happens:
+- For each epoch:
+  - forward
+  - loss backward
+  - optimizer step
+- Computes validation accuracy each epoch.
+- Saves best model to outputs/best.pt whenever val_acc improves.
+
+Important detail:
+- Checkpoint stores:
+  - model_state_dict
+  - classes (class-name order)
+  - image_size
+  (train.py lines 258-262)
+
+Why it matters:
+- Class ordering in checkpoint must match inference/evaluation mapping.
+
+==================================================
+4) TEST EVALUATION + METRICS WRITES
+==================================================
+
+Code:
+- train.py lines 264-287
+
+What happens:
+- Reloads best checkpoint.
+- Evaluates test split.
+- Builds confusion matrix + per-class precision/recall/F1.
+- Writes:
+  - outputs/metrics.json
+  - outputs/classification_report.json
+  - outputs/history.csv
+  - outputs/confusion_matrix.csv
+  - outputs/training_curves.png (if matplotlib installed)
+
+==================================================
+5) WHAT outputs/metrics.json CONTAINS
+==================================================
+
+Code:
+- metric construction in train.py lines 271-280
+
+Contents:
+- device
+- num_classes
+- classes
+- best_val_acc
+- test_acc
+- history
+- classification_report
+- confusion_matrix
+
+Use case:
+- Training-run diagnostics and quick report.
+
+==================================================
+6) WHY custom_metrics_v2.json EXISTS
+==================================================
+
+Code:
+- evaluator payload in eval_custom_pt.py lines 262-306
+
+This file is richer and comparison-ready.
+It includes:
+- metadata/core/ops/details structure
+- confidence averages
+- latency stats (mean, p50, p95, min, max)
+- false positive rate
+- per-class metrics
+- PR curves
+- threshold-precision/recall/coverage tables
+- dataset split counts
+
+Generated by:
+- eval_custom_pt.py parse args lines 20-42
+- default output path line 34 -> custom_metrics_v2.json
+
+==================================================
+7) WHY THERE ARE "TWO METRICS" TODAY
+==================================================
+
+You currently produce metrics in two steps:
+
+A) Training step
+- train.py writes outputs/metrics.json (lines 282-283)
+
+B) Evaluation normalization step
+- eval_custom_pt.py writes custom_metrics_v2.json (line 308)
+
+Backend comparison route behavior:
+- backend/app.py line 146 defines custom v2 path
+- backend/app.py line 147 defines legacy path
+- backend/app.py lines 152-155: prefer v2, fallback to legacy
+
+So the second metrics file exists for compatibility + richer dashboard analytics.
+
+==================================================
+8) CAN WE USE ONLY ONE?
+==================================================
+
+Yes.
+
+Recommended single file for app/comparison:
+- custom_metrics_v2.json
+
+Practical options:
+1. Keep both (current): safest backward compatibility.
+2. Keep only v2: cleaner architecture; remove fallback later.
+
+If you remove legacy metrics, also update:
+- backend/app.py fallback logic (lines 152-155)
+- any scripts/tests still reading outputs/metrics.json
+
+==================================================
+9) SHOULD WE TRACK ONLY ONE METRIC VALUE?
+==================================================
+
+If "one metric" means only accuracy:
+- Not recommended.
+
+Why:
+- Accuracy can hide class-specific failure modes.
+- For defects, false positives and per-class recall matter for operations.
+
+Minimum recommended set:
+- Accuracy
+- Macro F1
+- False Positive Rate
+- Mean inference latency
+
+==================================================
+10) COMMANDS YOU WILL USE MOST
+==================================================
+
+Train:
+python -m trainer.train --data_dir .\neu_final_dataset --output_dir outputs --epochs 8
+
+Create v2 metrics:
+python eval_custom_pt.py --model outputs\best.pt --test_dir neu_final_dataset\test --out custom_metrics_v2.json
+
+
+
+
+
+
+## Can We Use Just One Metric?
+
+If by "one metric" you mean only Accuracy:
+- Technically yes.
+- Practically no, because accuracy can hide class-specific failures.
+
+For defect classification, keep at least:
+- Accuracy (overall)
+- Macro F1 (class-balance aware)
+- False Positive Rate (quality/safety impact)
+- Inference latency (deployment impact)

@@ -1,6 +1,8 @@
 import glob
+import argparse
 import json
 import time
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +14,14 @@ from sklearn.metrics import (
 )
 
 try:
+    from label_normalization import normalize_automl_label, normalize_automl_labels
+except ImportError:
+    _BACKEND_DIR = Path(__file__).resolve().parents[2]
+    if str(_BACKEND_DIR) not in sys.path:
+        sys.path.append(str(_BACKEND_DIR))
+    from label_normalization import normalize_automl_label, normalize_automl_labels
+
+try:
     from tflite_runtime.interpreter import Interpreter as TFLiteInterpreter
 except Exception:
     import tensorflow as tf
@@ -20,25 +30,71 @@ except Exception:
 
 
 BASE_DIR = Path(__file__).resolve().parent
+MODELS_DIR = BASE_DIR.parent
 
 # ---------- CONFIG ----------
 _CANDIDATE_TEST_DIRS = [
-    BASE_DIR / "neu_final_dataset" / "test",
+    MODELS_DIR / "neu_final_dataset_fullnames" / "test",
     BASE_DIR.parent / "CustomML" / "neu_final_dataset" / "test",
 ]
-DATASET_TEST_DIR = next((p for p in _CANDIDATE_TEST_DIRS if p.exists()), _CANDIDATE_TEST_DIRS[0])
-TFLITE_MODEL_PATH = BASE_DIR / "AutoML model.tflite"
-LABELS_PATH = BASE_DIR / "labels.txt"
+DEFAULT_DATASET_TEST_DIR = next((p for p in _CANDIDATE_TEST_DIRS if p.exists()), _CANDIDATE_TEST_DIRS[0])
+DEFAULT_TFLITE_MODEL_PATH = BASE_DIR / "AutoML model.tflite"
+DEFAULT_LABELS_PATH = BASE_DIR / "labels.txt"
+FOLDER_TO_LABEL = {
+    "Cr": "Crazing",
+    "In": "Inclusion",
+    "Pa": "Patches",
+    "PS": "Pitted_Surface",
+    "RS": "Rolled_in_Scale",
+    "Sc": "Scratches",
+}
 
 MODEL_NAME = "AutoML Edge (TFLite)"
-DATASET_VERSION = "neu_final_dataset"
-RUN_ID = f"automl_{int(time.time())}"
-OUT_JSON = BASE_DIR / "automl_metrics.json"
+DEFAULT_OUT_JSON = BASE_DIR / "automl_metrics.json"
 # ---------------------------
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Evaluate AutoML TFLite model on dataset test split."
+    )
+    parser.add_argument(
+        "--model",
+        default=str(DEFAULT_TFLITE_MODEL_PATH),
+        help="Path to .tflite model file.",
+    )
+    parser.add_argument(
+        "--out",
+        default=str(DEFAULT_OUT_JSON),
+        help="Path to output metrics JSON file.",
+    )
+    parser.add_argument(
+        "--dataset_test_dir",
+        default=str(DEFAULT_DATASET_TEST_DIR),
+        help="Path to dataset test directory.",
+    )
+    parser.add_argument(
+        "--labels",
+        default=str(DEFAULT_LABELS_PATH),
+        help="Path to labels.txt.",
+    )
+    return parser.parse_args()
+
+
 def load_labels(path: Path):
-    return [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    raw = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    return normalize_automl_labels(raw)
+
+
+def resolve_gt_label(folder_name: str, labels: list[str]) -> str:
+    # Supports either short-code folders (Cr/In/...) or full label folders.
+    normalized_folder = normalize_automl_label(folder_name)
+    if normalized_folder in labels:
+        return normalized_folder
+    mapped = FOLDER_TO_LABEL.get(folder_name)
+    if mapped in labels:
+        return mapped
+    return normalized_folder
 
 
 def softmax(x: np.ndarray) -> np.ndarray:
@@ -137,21 +193,28 @@ def count_images(root: Path) -> int:
 
 
 def main():
-    if not DATASET_TEST_DIR.exists():
-        raise RuntimeError(f"Missing test dir: {DATASET_TEST_DIR}")
-    if not TFLITE_MODEL_PATH.exists():
-        raise RuntimeError(f"Missing model: {TFLITE_MODEL_PATH}")
-    if not LABELS_PATH.exists():
-        raise RuntimeError(f"Missing labels file: {LABELS_PATH}")
+    args = parse_args()
+    dataset_test_dir = Path(args.dataset_test_dir)
+    tflite_model_path = Path(args.model)
+    labels_path = Path(args.labels)
+    out_json = Path(args.out)
 
-    labels = load_labels(LABELS_PATH)
-    interpreter, in_det, out_det = load_interpreter(TFLITE_MODEL_PATH)
+    if not dataset_test_dir.exists():
+        raise RuntimeError(f"Missing test dir: {dataset_test_dir}")
+    if not tflite_model_path.exists():
+        raise RuntimeError(f"Missing model: {tflite_model_path}")
+    if not labels_path.exists():
+        raise RuntimeError(f"Missing labels file: {labels_path}")
 
-    class_folders = sorted([p for p in DATASET_TEST_DIR.iterdir() if p.is_dir()])
+    labels = load_labels(labels_path)
+    interpreter, in_det, out_det = load_interpreter(tflite_model_path)
+
+    class_folders = sorted([p for p in dataset_test_dir.iterdir() if p.is_dir()])
     gt_class_names = [p.name for p in class_folders]
     label_to_idx = {name: i for i, name in enumerate(labels)}
 
-    missing = [c for c in gt_class_names if c not in label_to_idx]
+    resolved_gt_names = [resolve_gt_label(c, labels) for c in gt_class_names]
+    missing = [c for c in resolved_gt_names if c not in label_to_idx]
     if missing:
         raise RuntimeError(
             f"These test folders are not in labels.txt: {missing}\n"
@@ -165,11 +228,11 @@ def main():
     probs_all = []
     sample_count = 0
 
-    for cls in gt_class_names:
-        cls_idx = label_to_idx[cls]
+    for folder_name, resolved_name in zip(gt_class_names, resolved_gt_names):
+        cls_idx = label_to_idx[resolved_name]
         img_paths = []
         for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.webp"):
-            img_paths.extend(glob.glob(str(DATASET_TEST_DIR / cls / ext)))
+            img_paths.extend(glob.glob(str(dataset_test_dir / folder_name / ext)))
         img_paths = [Path(p) for p in img_paths]
 
         for img_path in img_paths:
@@ -182,13 +245,13 @@ def main():
             sample_count += 1
 
     if sample_count == 0:
-        raise RuntimeError(f"No images found under: {DATASET_TEST_DIR}")
+        raise RuntimeError(f"No images found under: {dataset_test_dir}")
 
     y_true = np.array(y_true, dtype=int)
     y_pred = np.array(y_pred, dtype=int)
 
     acc = float(accuracy_score(y_true, y_pred))
-    prec, rec, f1, support = precision_recall_fscore_support(
+    prec, rec, f1, _ = precision_recall_fscore_support(
         y_true, y_pred, average="macro", zero_division=0
     )
     per_prec, per_rec, per_f1, per_support = precision_recall_fscore_support(
@@ -237,11 +300,11 @@ def main():
             "thresholds": [float(x) for x in pr_thresholds.tolist()],
         }
 
-    dataset_root = DATASET_TEST_DIR.parent
+    dataset_root = dataset_test_dir.parent
     dataset_counts = {
         "train": count_images(dataset_root / "train"),
         "val": count_images(dataset_root / "val"),
-        "test": count_images(DATASET_TEST_DIR),
+        "test": count_images(dataset_test_dir),
     }
     dataset_counts["total"] = dataset_counts["train"] + dataset_counts["val"] + dataset_counts["test"]
 
@@ -260,9 +323,10 @@ def main():
     payload = {
         "metadata": {
             "model_name": MODEL_NAME,
-            "run_id": RUN_ID,
+            "run_id": f"automl_{int(time.time())}",
             "timestamp": int(time.time()),
-            "dataset_version": DATASET_VERSION,
+            "dataset_version": dataset_root.name,
+            "model_path": str(tflite_model_path),
             "sample_count": sample_count,
             "classes": labels,
         },
@@ -276,7 +340,7 @@ def main():
         },
         "ops": {
             "training_time": None,
-            "model_size_mb": round(TFLITE_MODEL_PATH.stat().st_size / (1024 * 1024), 3),
+            "model_size_mb": round(tflite_model_path.stat().st_size / (1024 * 1024), 3),
             "gpu_required": False,
             "setup_complexity": "low",
             "false_positive_rate": fpr,
@@ -303,8 +367,8 @@ def main():
         },
     }
 
-    OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"Wrote: {OUT_JSON} ({sample_count} samples)")
+    out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"Wrote: {out_json} ({sample_count} samples)")
     print(
         f"Accuracy={acc:.4f}  MacroF1={float(f1):.4f}  MeanLatency={inference_ms['mean']:.2f}ms"
     )

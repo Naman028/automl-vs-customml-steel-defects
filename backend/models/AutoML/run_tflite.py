@@ -1,8 +1,17 @@
 from pathlib import Path
 import argparse
+import sys
 import numpy as np
 from PIL import Image
 import tensorflow as tf
+
+try:
+    from label_normalization import normalize_automl_label, normalize_automl_labels
+except ImportError:
+    _BACKEND_DIR = Path(__file__).resolve().parents[2]
+    if str(_BACKEND_DIR) not in sys.path:
+        sys.path.append(str(_BACKEND_DIR))
+    from label_normalization import normalize_automl_label, normalize_automl_labels
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -40,7 +49,9 @@ if not IMAGE_PATH.exists():
 
 labels = None
 if LABELS_PATH.exists():
-    labels = [line.strip() for line in LABELS_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
+    labels = normalize_automl_labels(
+        [line.strip() for line in LABELS_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
+    )
 
 interpreter = tf.lite.Interpreter(model_path=str(MODEL_PATH))
 interpreter.allocate_tensors()
@@ -75,5 +86,5 @@ print("Output:", output)
 if labels:
     scores = output[0]
     top_idx = int(np.argmax(scores))
-    top_label = labels[top_idx] if top_idx < len(labels) else f"index_{top_idx}"
+    top_label = normalize_automl_label(labels[top_idx] if top_idx < len(labels) else f"index_{top_idx}")
     print(f"Top label: {top_label}")

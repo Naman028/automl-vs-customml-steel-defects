@@ -4,28 +4,17 @@ This module provides integration with Google Cloud Vertex AI AutoML Vision
 """
 import os
 import base64
-import json
-from typing import Dict, Optional
+from typing import Dict
 from google.cloud import aiplatform
-from google.oauth2 import service_account
 from PIL import Image
 import io
+
+from label_normalization import automl_to_short_code, normalize_automl_label
 
 # Configuration - Set via environment variables for GCP deployment
 PROJECT_ID = os.getenv("GCP_PROJECT_ID", "")
 REGION = os.getenv("GCP_REGION", "us-central1")
 AUTOML_ENDPOINT_ID = os.getenv("VERTEX_AI_AUTOML_ENDPOINT_ID", "")
-CREDENTIALS_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
-
-def get_vertex_ai_client():
-    """Initialize Vertex AI client with credentials"""
-    if CREDENTIALS_PATH and os.path.exists(CREDENTIALS_PATH):
-        credentials = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH)
-        aiplatform.init(project=PROJECT_ID, location=REGION, credentials=credentials)
-    else:
-        # Use default credentials (for GCP environments)
-        aiplatform.init(project=PROJECT_ID, location=REGION)
-    return aiplatform
 
 def predict_with_automl(image: Image.Image) -> Dict:
     """
@@ -74,25 +63,18 @@ def predict_with_automl(image: Image.Image) -> Dict:
             top_class = "Unknown"
             top_confidence = 0.0
         
-        # Map AutoML class names to our format (if needed)
-        class_mapping = {
-            "Crazing": "Cr",
-            "Inclusion": "In",
-            "Patches": "Pa",
-            "Pitted": "PS",
-            "Rolled-in Scale": "RS",
-            "Scratches": "Sc",
-        }
-        
-        raw_class = class_mapping.get(top_class, top_class)
+        top_class = normalize_automl_label(top_class)
+        raw_class = automl_to_short_code(top_class)
+
+        all_probs: Dict[str, float] = {}
+        for i in range(min(len(predictions.get("displayNames", [])), len(predictions.get("confidences", [])))):
+            label = normalize_automl_label(predictions["displayNames"][i])
+            all_probs[label] = all_probs.get(label, 0.0) + float(predictions["confidences"][i])
         
         return {
             "predicted_class": top_class,
             "confidence": float(top_confidence),
-            "all_probabilities": {
-                predictions["displayNames"][i]: float(predictions["confidences"][i])
-                for i in range(min(len(predictions.get("displayNames", [])), len(predictions.get("confidences", []))))
-            },
+            "all_probabilities": all_probs,
             "raw_top_class": raw_class,
             "threshold": 0.5,
             "inference_time_ms": 0,  # Vertex AI doesn't provide this directly

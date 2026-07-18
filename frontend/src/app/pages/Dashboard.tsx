@@ -3,13 +3,8 @@ import { SteelTypes } from '../components/catalog/SteelTypes';
 import { MetalTypes } from '../components/catalog/MetalTypes';
 import { SingleFrameScanner } from '../components/single-frame/SingleFrameScanner';
 import { BatchScanner } from '../components/batch/BatchScanner';
-import { AdminPanel } from '../components/Login/AdminPanel';
-import { EmployeePanel } from '../components/Login/EmployeePanel';
-import { useAuth } from '../contexts/AuthContext';
 
 export const Dashboard: React.FC = () => {
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors duration-300">
       {/* Decorative background elements */}
@@ -19,11 +14,6 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Role-based Panel */}
-        {user?.role === 'admin' && <AdminPanel />}
-        {user?.role === 'employee' && <EmployeePanel />}
-        {/* Demo mode doesn't show a panel - similar to employee but cleaner */}
-
         {/* Metal Types Showcase */}
         <MetalTypes />
         

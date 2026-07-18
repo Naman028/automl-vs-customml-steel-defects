@@ -39,6 +39,12 @@ def parse_args():
         default=f"custom_{int(time.time())}",
         help="Run id for metadata",
     )
+    parser.add_argument(
+        "--confidence_threshold",
+        type=float,
+        default=0.55,
+        help="Production confidence threshold; lower predictions are counted as abstentions.",
+    )
     return parser.parse_args()
 
 
@@ -58,11 +64,15 @@ def compute_macro_fpr(cm: np.ndarray) -> float:
 
 def confusion_and_macro_metrics(y_true: np.ndarray, y_pred: np.ndarray, n_classes: int):
     cm = np.zeros((n_classes, n_classes), dtype=np.int64)
+    rejected = np.zeros(n_classes, dtype=np.int64)
     for t, p in zip(y_true, y_pred):
-        cm[int(t), int(p)] += 1
+        if 0 <= int(p) < n_classes:
+            cm[int(t), int(p)] += 1
+        else:
+            rejected[int(t)] += 1
 
     correct = np.trace(cm)
-    total = np.sum(cm)
+    total = len(y_true)
     acc = float(correct / max(total, 1))
 
     precisions = []
@@ -71,7 +81,7 @@ def confusion_and_macro_metrics(y_true: np.ndarray, y_pred: np.ndarray, n_classe
     for i in range(n_classes):
         tp = cm[i, i]
         fp = np.sum(cm[:, i]) - tp
-        fn = np.sum(cm[i, :]) - tp
+        fn = np.sum(cm[i, :]) - tp + rejected[i]
         precision = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
         recall = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
         f1 = (2.0 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
@@ -82,7 +92,7 @@ def confusion_and_macro_metrics(y_true: np.ndarray, y_pred: np.ndarray, n_classe
     macro_precision = float(np.mean(precisions)) if precisions else 0.0
     macro_recall = float(np.mean(recalls)) if recalls else 0.0
     macro_f1 = float(np.mean(f1s)) if f1s else 0.0
-    return cm, acc, macro_precision, macro_recall, macro_f1
+    return cm, rejected, acc, macro_precision, macro_recall, macro_f1
 
 
 def load_model(model_path: Path):
@@ -183,9 +193,14 @@ def main():
         raise RuntimeError(f"No test images found under: {test_dir}")
 
     y_true_np = np.array(y_true, dtype=int)
-    y_pred_np = np.array(y_pred, dtype=int)
+    raw_y_pred_np = np.array(y_pred, dtype=int)
+    conf_np = np.array(confidences, dtype=float)
+    y_pred_np = np.where(conf_np >= args.confidence_threshold, raw_y_pred_np, -1)
 
-    cm, acc, prec, rec, f1 = confusion_and_macro_metrics(y_true_np, y_pred_np, len(classes))
+    cm, rejected, acc, prec, rec, f1 = confusion_and_macro_metrics(
+        y_true_np, y_pred_np, len(classes)
+    )
+    raw_accuracy = float(np.mean(y_true_np == raw_y_pred_np))
     fpr = compute_macro_fpr(cm)
 
     lat_arr = np.array(latencies, dtype=float)
@@ -202,7 +217,7 @@ def main():
     for i, cls in enumerate(classes):
         tp = cm[i, i]
         fp = np.sum(cm[:, i]) - tp
-        fn = np.sum(cm[i, :]) - tp
+        fn = np.sum(cm[i, :]) - tp + rejected[i]
         precision_i = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
         recall_i = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
         f1_i = (
@@ -216,7 +231,8 @@ def main():
                 "precision": precision_i,
                 "recall": recall_i,
                 "f1": f1_i,
-                "support": int(np.sum(cm[i, :])),
+                "support": int(np.sum(cm[i, :]) + rejected[i]),
+                "abstentions": int(rejected[i]),
             }
         )
 
@@ -267,9 +283,12 @@ def main():
             "dataset_version": "neu_final_dataset",
             "sample_count": sample_count,
             "classes": classes,
+            "evaluation_profile": "deployed_threshold",
+            "confidence_threshold": args.confidence_threshold,
         },
         "core": {
             "accuracy": acc,
+            "raw_argmax_accuracy": raw_accuracy,
             "precision": prec,
             "recall": rec,
             "f1": f1,
@@ -292,6 +311,8 @@ def main():
             "confusion_matrix": cm.tolist(),
             "y_true": y_true_np.tolist(),
             "y_pred": y_pred_np.tolist(),
+            "raw_y_pred": raw_y_pred_np.tolist(),
+            "abstentions_by_class": rejected.tolist(),
             "probabilities": probs_all,
             "per_class_metrics": per_class_metrics,
             "pr_curves": pr_curves,
