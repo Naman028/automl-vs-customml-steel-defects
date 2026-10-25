@@ -1,269 +1,201 @@
-# Steel Defect Detection: AutoML vs CustomML
+# Steel Defect Detection
 
-A full-stack steel-surface inspection demo that compares:
+Compare a custom PyTorch ResNet18 with Google AutoML Vision exported to TensorFlow
+Lite, alongside a separate GC10 multilabel baseline.
 
-- Google AutoML Edge exported as TensorFlow Lite
-- A refined PyTorch ResNet18 CustomML classifier
+## What it does
 
-The application supports single-image and batch prediction, camera capture, a live comparison dashboard, prediction history, and a domain assistant for the six NEU surface-defect classes.
-
-## Supported classes
-
-1. Crazing
-2. Inclusion
-3. Patches
-4. Pitted Surface
-5. Rolled-in Scale
-6. Scratches
-
-The classifiers are not trained for rust, normal/no-defect surfaces, aluminum defects, or unknown defect classes. The system is a screening demo and must not replace qualified inspection or an applicable acceptance standard.
-
-Authentication is also demo-only: the frontend contains mock local credentials and tokens for UI demonstration. It does not provide server-side authentication, authorization, or production security.
+- Compares the custom classifier and exported AutoML model on the NEU six-class task.
+  A Vertex AI endpoint is an optional, explicitly enabled fallback; local TFLite is the default.
+- Runs a separate GC10 ten-class multilabel experiment using a frozen NEU-trained
+  ResNet18 backbone and a locally trained classifier head.
+- Provides a FastAPI and React interface for image upload, camera capture, batch
+  inference, prediction history, model comparison, and GC10 results.
+- Answers steel-domain questions using intent matching and BM25 retrieval.
 
 ## Architecture
 
-```text
-React/Vite frontend (localhost:5173)
-             |
-             | HTTP/JSON + multipart uploads
-             v
-FastAPI backend (localhost:8001)
-       |                    |
-       v                    v
-PyTorch CustomML       AutoML TFLite
-       |
-       +-- comparison metrics + assistant retrieval index
+```mermaid
+flowchart LR
+    UI[React interface] --> API[FastAPI upload validation]
+    API --> NEU[NEU ResNet18]
+    API --> TFLite[Local AutoML TFLite]
+    API --> GC10[GC10 multilabel model]
+    API -. explicit opt-in .-> Vertex[Vertex AI endpoint]
+    Data[Frozen dataset manifests] --> Eval[Shared evaluation mathematics]
+    NEU --> Eval
+    TFLite --> Eval
+    GC10 --> Eval
+    Eval --> Reports[Generated JSON and prediction records]
+    Reports --> UI
 ```
 
-Important paths:
+## Data pipeline
 
-- `frontend/` — React/TypeScript UI
-- `backend/app.py` — FastAPI routes
-- `backend/inference.py` — model loading, validation, and inference
-- `backend/comparison.py` — shared metric schema and winner logic
-- `backend/assistant/` — intent routing, knowledge base, and retrieval index
-- `backend/models/AutoML/` — TFLite model, labels, evaluator, and metrics
-- `backend/models/CustomML/` — trainer, checkpoint, evaluator, and metrics
-- `scripts/` — PowerShell launch helpers
-- `tests/` — assistant, API, and browser smoke tests
+NEU and GC10 remain different tasks. NEU predicts one supported defect category;
+GC10 predicts category presence for images that may contain several defects.
 
-## Requirements
+File and decoded-pixel checks reject duplicate NEU inputs across splits. GC10
+preparation verifies duplicate copies before deduplication, records its explicit
+class-label spelling repair, and excludes unknown labels, empty annotations,
+conflicting image copies, invalid boxes, and filenames whose capture group cannot
+be inferred. The current exclusion rules and split assignments are frozen in
+[`data/`](data/). No test split or label was changed during the publication cleanup.
 
-- Windows PowerShell
-- Python 3.11+ recommended
-- Node.js 18+
-- npm
+GC10 capture tokens stay in one split. These tokens are inferred from filenames,
+not verified physical sheet identities. This reduces a known leakage risk but does
+not establish independent camera generalization. Training-only augmentation is
+separate from deterministic evaluation preprocessing.
 
-The current environment uses CPU inference. GPU is optional for CustomML training.
+## Evaluation methodology
 
-## Installation
+[`evaluation_metrics.py`](backend/models/evaluation_metrics.py) contains the shared
+metrics mathematics. The NEU evaluator uses Pandas for per-image prediction tables
+and grouped error analysis, and NumPy for confusion matrices, abstentions, and
+class-level statistics. GC10 uses multilabel precision, recall, F1 and average
+precision. The tasks are not combined into one accuracy ranking.
 
-From the repository root:
+Reports preserve model and dataset identities. Validation data selects GC10
+checkpoints and thresholds; the held-out test is used for reporting. The existing
+NEU benchmark has already informed development and is not a fresh independent
+holdout. New model choices must not be tuned against the reported test results.
+
+## Generated reports
+
+The README deliberately contains no measured performance figures. Inspect the
+machine-readable reports and their scope information:
+
+- [NEU AutoML report](backend/models/AutoML/automl_metrics.json)
+- [NEU CustomML report](backend/models/CustomML/custom_metrics_v2.json)
+- [GC10 baseline ? frozen ResNet18 backbone](backend/models/GC10/metrics.json)
+- [Evaluation audit summary](backend/models/evaluation_audit_summary.json)
+- [Evaluation audit and reproduction notes](EVALUATION_AUDIT.md)
+
+Raw local evaluation directories and datasets are excluded from Git. Dashboard
+pages read generated JSON; the GC10 page identifies whether its local checkpoint
+is available or only the reviewed report snapshot is present.
+
+## Engineering notes
+
+The evaluator exposed an AutoML input-normalization mismatch and an external
+label-order mismatch. Inference now follows the exported normalization metadata
+and verifies the label order against the embedded label file. Confidence is
+reported as certainty, not treated as evidence of superior model quality.
+
+The current GC10 baseline reuses the existing NEU-trained backbone as a frozen
+feature extractor. Only its new classifier head was trained for GC10; it is not a
+claim of end-to-end GC10 backbone training.
+
+## Tech stack
+
+Python, PyTorch/torchvision, TensorFlow Lite, FastAPI, Pandas, NumPy, scikit-learn,
+React, TypeScript, Vite and Tailwind. Development checks use Ruff, scoped strict
+mypy, pytest, ESLint and Playwright.
+
+## Quick start
+
+Use Python 3.13 and Node.js 24. From the repository root:
 
 ```powershell
-python -m venv .venv
-Set-ExecutionPolicy -Scope Process Bypass
-.\.venv\Scripts\Activate.ps1
-pip install -r backend\requirements.txt
-
-cd frontend
-npm install
-cd ..
-```
-
-## Running the application
-
-Run backend and frontend together:
-
-```powershell
+.\scripts\setup.ps1
+.\scripts\download_weights.ps1
 .\scripts\run_dev.ps1
 ```
 
-Run both from one VS Code terminal session:
+Bash equivalents:
 
-```powershell
-.\scripts\run_dev.ps1 -InTerminal
+```bash
+bash scripts/setup.sh
+bash scripts/download_weights.sh
+bash scripts/run.sh
 ```
 
-Run separately:
+The weight verifier checks SHA-256 identities in [`artifacts/models.json`](artifacts/models.json).
+Release URLs are intentionally unset pending owner approval and redistribution
+provenance review. Existing approved local weights can be verified in place or
+restored using `--source-dir` with a local bundle that preserves manifest paths.
+A fresh clone cannot run model predictions until those weights are provisioned.
+Informational routes and fixture tests do not require them.
+
+The frontend uses `VITE_API_BASE_URL`; the backend uses the typed configuration
+in [`backend/config.py`](backend/config.py). Copy [`.env.example`](.env.example) to
+`.env` if setup has not already done so. Frontend demo sign-in is disabled by
+default. `VITE_DEMO_MODE=true` explicitly enables demonstration controls; any
+`VITE_*` setting is public browser configuration, never a secret. There is no
+server-side authentication.
+
+Optional Vertex integration requires `backend/requirements-vertex.txt`,
+`ENABLE_VERTEX_AI=true`, and configured project/endpoint credentials. Do not place
+service-account files in the repository. A working local TFLite model takes
+priority; its inference failure is surfaced without silently issuing a paid call.
+
+### Data and training
+
+Obtain datasets from their documented sources before verifying the frozen manifests:
 
 ```powershell
-# Terminal 1
-.\scripts\run_backend.ps1
+.\scripts\prepare_data.ps1 --neu-root backend/models/neu_final_dataset_fullnames --gc10-root backend/models/archive
+.\scripts\train_neu.ps1 --data_dir ../neu_final_dataset_fullnames --output_dir outputs_new_run --seed 42
+.\scripts\train_gc10.ps1 --out-dir backend/models/GC10/outputs_local_v2
+```
 
-# Terminal 2
+Equivalent Bash wrappers have the same filenames with `.sh`. See the
+[data acquisition and verification instructions](data/SOURCES.md),
+[GC10 experiment guide](backend/models/GC10/README.md), and
+[shared evaluation guide](backend/models/SHARED_EVALUATION.md).
+
+### Evaluate
+
+```powershell
+.\scripts\evaluate.ps1 neu --test-dir backend/models/neu_final_dataset_fullnames/test --reference-dir backend/models/neu_final_dataset_fullnames/train --reference-dir backend/models/neu_final_dataset_fullnames/val --out-dir backend/models/evaluation_reports/new-neu-run
+.\scripts\evaluate.ps1 gc10 --out-dir backend/models/evaluation_reports/new-gc10-run
+```
+
+```bash
+bash scripts/evaluate.sh neu --test-dir backend/models/neu_final_dataset_fullnames/test --reference-dir backend/models/neu_final_dataset_fullnames/train --reference-dir backend/models/neu_final_dataset_fullnames/val --out-dir backend/models/evaluation_reports/new-neu-run
+bash scripts/evaluate.sh gc10 --out-dir backend/models/evaluation_reports/new-gc10-run
+```
+
+## Tests and CI
+
+```powershell
+.\.venv\Scripts\python.exe -m ruff check backend tests scripts
+.\.venv\Scripts\python.exe -m ruff format --check backend tests scripts
+.\.venv\Scripts\python.exe -m mypy
+.\.venv\Scripts\python.exe -m pytest -m "not requires_weights and not requires_datasets and not live_api" --cov --cov-report=xml
+npm --prefix frontend run lint
+npm --prefix frontend run typecheck
+npm --prefix frontend run build
 cd frontend
-npm run dev
+npx playwright install chromium
+npm test
 ```
 
-Open `http://localhost:5173`. The frontend calls the backend at `http://localhost:8001` by default. Override the frontend endpoint with `VITE_API_BASE_URL` if required.
+[`CI`](.github/workflows/ci.yml) runs small-fixture checks on push and pull request,
+without GCP secrets, datasets, or downloaded checkpoints. Tests needing artifacts
+are marked `requires_weights` and/or `requires_datasets`; live API tests are
+separately marked. Strict mypy covers the explicit new/refactored module list in
+`pyproject.toml`; untouched legacy code is not subjected to a blanket strict migration.
 
-Backend options:
+## Roadmap
 
-```powershell
-.\scripts\run_backend.ps1 -AssistantMode dataset
-.\scripts\run_backend.ps1 -RestartIfRunning
-.\scripts\run_backend.ps1 -Port 8001
-```
+- Evaluate fine-tuning of the last backbone block using training/validation data.
+- Add independently collected capture conditions and a separately governed final holdout.
+- Design and validate normal/unknown-class handling before extending model scope.
 
-Do not start multiple backend processes on the same port.
+## Scope
 
-## API endpoints
+A research and portfolio project, not intended for production acceptance decisions.
 
-- `GET /health` — model and service readiness
-- `GET /model/info` — CustomML metadata
-- `GET /test-model` — model diagnostic
-- `POST /predict?model_type=custom|automl|both` — single image
-- `POST /predict/batch?model_type=custom|automl|both` — batch images
-- `POST /predict/debug` — detailed CustomML result
-- `POST /assistant` — domain assistant
-- `GET /compare/metrics` — normalized live comparison payload
+## Datasets and attribution
 
-Accepted uploads: JPEG/JPG, PNG, WebP, and BMP, up to 5 MB per image. Batch requests accept at most 50 files.
+NEU data belongs to its original providers, Kechen Song and Yunhui Yan at
+Northeastern University: [official database](https://faculty.neu.edu.cn/songkc/en/zdylm/263270/list/index.htm).
+GC10 belongs to its original authors: [official repository](https://github.com/lvxiaoming2019/GC10-DET-Metallic-Surface-Defect-Datasets)
+and [Lv et al., Sensors, DOI: 10.3390/s20061562](https://doi.org/10.3390/s20061562).
 
-## Live comparison dashboard
-
-The Comparison page polls `/compare/metrics` every five seconds and refreshes when the browser tab becomes visible. It shows the latest contents of:
-
-- `backend/models/AutoML/automl_metrics.json`
-- `backend/models/CustomML/custom_metrics_v2.json`
-
-CustomML comparison accuracy uses the deployed 55% confidence threshold. Predictions below the threshold count as abstentions/Unknown rather than being forced into a class.
-
-### Evaluation warning
-
-The included NEU split contains 1,440 training, 180 validation, and 180 test images from one clean dataset distribution. A high score on this test split does not prove production generalization. A trustworthy production estimate requires an external holdout captured with the intended camera, optics, lighting, steel grades, normal surfaces, and unknown defects.
-
-Do not manually lower metrics. Generate new metrics by evaluating both models on the same independent dataset.
-
-## AI assistant
-
-The assistant is a deterministic domain assistant, not a general-purpose generative LLM. It combines:
-
-- Explicit intent handlers for definitions, metrics, equipment, lighting, supported scope, and safety limits
-- BM25 retrieval over the steel-defect QA index
-- Optional prediction context only when the question refers to the current result
-
-Rebuild its retrieval index after changing `train_simple.jsonl`:
-
-```powershell
-.\.venv\Scripts\python.exe backend\assistant\train_dataset_retriever.py
-```
-
-The raw synthetic assistant dataset is intentionally ignored by Git; the generated runtime index is retained.
-
-## CustomML training
-
-The refined trainer uses pretrained ResNet18 weights, stronger augmentation, random erasing, label smoothing, AdamW weight decay, differential learning rates, validation-loss checkpointing, learning-rate reduction, deterministic seeds, and early stopping.
-
-Expected dataset layout:
-
-```text
-backend/models/neu_final_dataset_fullnames/
-  train/<class>/*.jpg
-  val/<class>/*.jpg
-  test/<class>/*.jpg
-```
-
-Train from the CustomML directory:
-
-```powershell
-cd backend\models\CustomML
-..\..\..\.venv\Scripts\python.exe -m trainer.train `
-  --data_dir ..\neu_final_dataset_fullnames `
-  --output_dir outputs `
-  --epochs 30 `
-  --batch_size 32
-```
-
-The production checkpoint is `backend/models/CustomML/outputs/best.pt`.
-
-Regenerate deployed CustomML metrics:
-
-```powershell
-.\.venv\Scripts\python.exe backend\models\CustomML\eval_custom_pt.py `
-  --model backend\models\CustomML\outputs\best.pt `
-  --test_dir backend\models\neu_final_dataset_fullnames\test `
-  --out backend\models\CustomML\custom_metrics_v2.json `
-  --confidence_threshold 0.55
-```
-
-Regenerate AutoML metrics on the same split:
-
-```powershell
-.\.venv\Scripts\python.exe backend\models\AutoML\eval_automl_tflite.py `
-  --dataset_test_dir backend\models\neu_final_dataset_fullnames\test `
-  --model "backend\models\AutoML\AutoML model.tflite" `
-  --labels backend\models\AutoML\labels.txt `
-  --out backend\models\AutoML\automl_metrics.json
-```
-
-## Verification
-
-Assistant behavior tests:
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest tests.api.test_assistant_unittest -v
-```
-
-Backend API tests:
-
-```powershell
-pip install -r backend\requirements-dev.txt
-python -m pytest tests\api -q -s
-```
-
-Frontend production build:
-
-```powershell
-cd frontend
-npm run build
-```
-
-Optional Playwright smoke test instructions are in `tests/README.md`.
-
-## Data and GitHub
-
-Image datasets, virtual environments, caches, generated reports, and TestSprite temporary output are ignored. Do not commit secrets, `.env` files, cloud credentials, or the raw NEU dataset unless its license and repository size are appropriate.
-
-The CustomML checkpoint is about 43 MB. GitHub accepts individual files below 100 MB, but Git LFS is recommended for model binaries:
-
-```powershell
-git lfs install
-git lfs track "*.pt" "*.tflite"
-git add .gitattributes
-```
-
-Review and push the code yourself:
-
-```powershell
-git status
-git diff --check
-git diff --stat
-
-git add .
-git status
-git diff --cached --check
-
-git commit -m "Prepare steel defect application for release"
-git branch -M main
-git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_REPOSITORY>.git
-git push -u origin main
-```
-
-If `origin` already exists, inspect it with `git remote -v` and update it only if necessary:
-
-```powershell
-git remote set-url origin https://github.com/<YOUR_USERNAME>/<YOUR_REPOSITORY>.git
-```
-
-Before pushing, inspect staged files carefully and confirm that no dataset, token, credential, local environment, or unwanted binary was added.
-
-## Troubleshooting
-
-- Script not found: run commands from the repository root.
-- Script execution disabled: `Set-ExecutionPolicy -Scope Process Bypass`.
-- Frontend cannot reach backend: check `http://localhost:8001/health` and `VITE_API_BASE_URL`.
-- Old assistant answers: ensure only one backend process is running and restart it.
-- Comparison not updating: verify both metrics JSON files, then use the live status/Refresh control.
-- AutoML label mismatch: do not reorder `backend/models/AutoML/labels.txt` for the current TFLite model.
+The code uses third-party architectures and libraries, and the AutoML artifact is
+an existing course export whose cloud training lineage remains unverified. See
+[third-party notices and publication permissions](THIRD_PARTY_NOTICES.md).
+No dataset or weight redistribution licence is inferred from public availability.
+A licence for original project code has not yet been selected by the owner.
