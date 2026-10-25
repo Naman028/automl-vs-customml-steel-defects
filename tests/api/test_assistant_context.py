@@ -1,12 +1,4 @@
-import sys
-from pathlib import Path
-
-
-BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
-
-from assistant.assistant_service import answer_question
+from backend.assistant.assistant_service import answer_question
 
 
 PREDICTION = {

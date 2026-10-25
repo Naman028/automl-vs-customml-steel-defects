@@ -1,2 +1,0 @@
--r ../../requirements-metrics.txt
-matplotlib==3.10.8

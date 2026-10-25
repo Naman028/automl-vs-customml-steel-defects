@@ -1,0 +1,17 @@
+FROM python:3.13-slim
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+COPY requirements/ requirements/
+RUN pip install torch==2.9.1 torchvision==0.24.1 --index-url https://download.pytorch.org/whl/cpu \
+    && pip install -r requirements/requirements-local.txt
+ARG INSTALL_VERTEX=false
+RUN if [ "$INSTALL_VERTEX" = "true" ]; then pip install -r requirements/requirements-vertex.txt; fi
+COPY backend/ backend/
+COPY models/AutoML/labels.txt models/AutoML/
+COPY reports/benchmarks/ reports/benchmarks/
+RUN useradd --create-home appuser
+USER appuser
+EXPOSE 8001
+CMD ["python", "-m", "uvicorn", "backend.api.app:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

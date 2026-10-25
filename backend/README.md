@@ -4,9 +4,16 @@ This backend is a FastAPI service for steel-defect inference and model compariso
 
 ## Runtime
 
-- App entrypoint: `backend/app.py`
-- Inference runtime: `backend/inference.py`
-- Metrics comparison: `backend/comparison.py`
+Run from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn backend.api.app:app --port 8001
+```
+
+
+- App entrypoint: `backend/api/app.py`
+- Inference runtime: `backend/inference/neu.py`
+- Metrics comparison: `backend/services/comparison.py`
 
 ## API Endpoints
 
@@ -23,12 +30,12 @@ This backend is a FastAPI service for steel-defect inference and model compariso
 ## Assistant Dataset Training (Safe Local Mode)
 
 You can train the assistant retrieval index from:
-- `backend/assistant/neu_defect_assistant_dataset/train_simple.jsonl`
+- `data/raw/assistant/train_simple.jsonl`
 
 Train/build index:
 
 ```powershell
-python backend/assistant/train_dataset_retriever.py
+python -m ml.assistant.train_retriever
 ```
 
 This creates:
@@ -62,13 +69,13 @@ One-command full app startup (backend + frontend):
 One-command full app startup with explicit backend model/mode:
 
 ```powershell
-.\scripts\run_dev.ps1 -AutoMLModelPath .\backend\models\AutoML\AutoML model.tflite -AssistantMode dataset
+.\scripts\run_dev.ps1 -AutoMLModelPath ".\models\AutoML\AutoML model.tflite" -AssistantMode dataset
 ```
 
 Run with explicit AutoML model path:
 
 ```powershell
-.\scripts\run_backend.ps1 -AutoMLModelPath .\models\AutoML\AutoML model.tflite
+.\scripts\run_backend.ps1 -AutoMLModelPath ".\models\AutoML\AutoML model.tflite"
 ```
 
 If backend is already running and you need to apply new settings:
@@ -80,7 +87,7 @@ If backend is already running and you need to apply new settings:
 Notes:
 - The script prevents starting a second backend on port `8001` by default.
 - `-AutoMLModelPath` accepts absolute paths and project-relative paths.
-- Default AutoML path is auto-selected: `backend/models/AutoML/AutoML model.tflite`.
+- Default AutoML path is auto-selected: `models/AutoML/AutoML model.tflite`.
 - Assistant mode auto-selection:
   - `dataset` if `backend/assistant/assistant_dataset_index.json` exists
   - otherwise `local`
@@ -88,10 +95,10 @@ Notes:
 ## AutoML Artifacts
 
 Active AutoML model:
-- `backend/models/AutoML/AutoML model.tflite`
+- `models/AutoML/AutoML model.tflite`
 
 AutoML labels:
-- `backend/models/AutoML/labels.txt`
+- `models/AutoML/labels.txt`
 
 Current label order:
 1. `Crazing`
@@ -105,7 +112,7 @@ This order is required to map output indices correctly for the current TFLite mo
 
 ## Evaluate AutoML Model
 
-`backend/models/AutoML/eval_automl_tflite.py` supports:
+`ml/automl/eval_automl_tflite.py` supports:
 - `--model`
 - `--out`
 - `--dataset_test_dir`
@@ -114,11 +121,11 @@ This order is required to map output indices correctly for the current TFLite mo
 Example:
 
 ```powershell
-python backend/models/AutoML/eval_automl_tflite.py `
-  --model backend/models/AutoML/AutoML model.tflite `
-  --labels backend/models/AutoML/labels.txt `
-  --dataset_test_dir backend/models/neu_final_dataset_fullnames/test `
-  --out backend/models/AutoML/automl_metrics.json
+python -m ml.automl.eval_automl_tflite `
+  --model models/AutoML/AutoML model.tflite `
+  --labels models/AutoML/labels.txt `
+  --dataset_test_dir data/processed/neu/test `
+  --out reports/benchmarks/neu_automl.json
 ```
 
 ## CustomML Commands
@@ -126,15 +133,13 @@ python backend/models/AutoML/eval_automl_tflite.py `
 Train:
 
 ```powershell
-cd backend/models/CustomML
-python -m trainer.train --data_dir .\neu_final_dataset --output_dir outputs --epochs 12
+python -m ml.neu.trainer.train --data_dir data/processed/neu --output_dir models/CustomML/outputs_new --epochs 12
 ```
 
 Evaluate to v2 metrics:
 
 ```powershell
-cd backend/models/CustomML
-python eval_custom_pt.py --model outputs\best.pt --test_dir neu_final_dataset\test --out custom_metrics_v2.json
+python -m ml.neu.eval_custom_pt --model models/CustomML/outputs/best.pt --test_dir data/processed/neu/test --out reports/runs/new-custom-metrics.json
 ```
 
 ## Troubleshooting

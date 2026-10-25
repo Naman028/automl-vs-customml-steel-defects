@@ -22,7 +22,7 @@ def main() -> None:
         "--source-dir", type=Path, help="Local approved bundle preserving manifest paths"
     )
     arguments = parser.parse_args()
-    registry = json.loads((ROOT / "artifacts/models.json").read_text(encoding="utf-8"))
+    registry = json.loads((ROOT / "models/registry.json").read_text(encoding="utf-8"))
     for artifact in registry["models"]:
         destination = (ROOT / artifact["path"]).resolve()
         if not destination.is_relative_to(ROOT):

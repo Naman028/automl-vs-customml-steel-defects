@@ -43,6 +43,9 @@ IGNORED_PARTS = {
     "__pycache__",
     "archive",
     "evaluation_reports",
+    "raw",
+    "processed",
+    "runs",
     "neu_final_dataset_fullnames",
     "neu_final_dataset",
 }

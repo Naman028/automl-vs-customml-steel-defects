@@ -11,11 +11,7 @@ import pytest
 
 @pytest.fixture
 def workspace_tmp_path():
-    directory = (
-        Path(__file__).resolve().parents[1]
-        / "backend/models/evaluation_reports"
-        / f"fixture-{uuid.uuid4().hex}"
-    )
+    directory = Path(__file__).resolve().parents[1] / "reports/runs" / f"fixture-{uuid.uuid4().hex}"
     directory.mkdir(parents=True)
     try:
         yield directory

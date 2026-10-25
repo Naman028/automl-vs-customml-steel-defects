@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 from fastapi.testclient import TestClient
 
-import app
-import gc10_runtime
-from evaluation_metrics import calculate_metrics, summarize
-from evaluate_shared import CLASSES
+from backend.api import app
+from backend.inference import gc10 as gc10_runtime
+from ml.evaluation_metrics import calculate_metrics, summarize
+from ml.evaluate_shared import CLASSES
 
 
 def test_neu_dashboard_matches_fixture_evaluator(workspace_tmp_path, monkeypatch):
@@ -24,11 +24,11 @@ def test_neu_dashboard_matches_fixture_evaluator(workspace_tmp_path, monkeypatch
     )
     generated = summarize(frame, "fixture", 0.55)
     generated["metadata"] = {"classes": CLASSES}
-    for folder, name in [("AutoML", "automl_metrics.json"), ("CustomML", "custom_metrics_v2.json")]:
-        path = tmp_path / "models" / folder / name
-        path.parent.mkdir(parents=True)
+    for name in ["neu_automl.json", "neu_custom.json"]:
+        path = tmp_path / "benchmarks" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(generated))
-    monkeypatch.setattr(app, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(app, "REPORTS_ROOT", tmp_path)
     response = TestClient(app.app).get("/compare/metrics")
     assert response.status_code == 200
     assert response.json()["automl"]["core"] == generated["core"]
@@ -49,9 +49,9 @@ def test_gc10_dashboard_matches_fixture_evaluator(workspace_tmp_path, monkeypatc
 
 
 def test_dashboard_does_not_fall_back_to_legacy_training_results(workspace_tmp_path, monkeypatch):
-    monkeypatch.setattr(app, "BASE_DIR", workspace_tmp_path)
+    monkeypatch.setattr(app, "REPORTS_ROOT", workspace_tmp_path)
     report = {"metadata": {}, "core": {}, "ops": {}}
-    automl = workspace_tmp_path / "models/AutoML/automl_metrics.json"
+    automl = workspace_tmp_path / "benchmarks/neu_automl.json"
     automl.parent.mkdir(parents=True)
     automl.write_text(json.dumps(report))
     legacy = workspace_tmp_path / "models/CustomML/outputs/metrics.json"

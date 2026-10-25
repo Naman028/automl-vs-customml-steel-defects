@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from label_normalization import to_display_label
-from config import assistant_mode
+from backend.core.labels import to_display_label
+from backend.core.config import assistant_mode
 
 DOCS_PATH = Path(__file__).with_name("knowledge_base.md")
 DATASET_INDEX_PATH = Path(__file__).with_name("assistant_dataset_index.json")

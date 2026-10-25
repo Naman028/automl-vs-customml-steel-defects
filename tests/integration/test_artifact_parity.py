@@ -17,9 +17,7 @@ pytestmark = [
 
 
 def test_saved_gc10_groups_and_pixels_do_not_cross_splits():
-    path = (
-        Path(__file__).resolve().parents[2] / "backend/models/GC10/outputs_local_v1/manifest.json"
-    )
+    path = Path(__file__).resolve().parents[2] / "models/GC10/outputs_local_v1/manifest.json"
     records = json.loads(path.read_text())
     for field in ("capture_group", "decoded_sha256"):
         values = {

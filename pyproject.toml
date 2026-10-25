@@ -1,7 +1,7 @@
 [tool.ruff]
 target-version = "py313"
 line-length = 100
-extend-exclude = [".venv", "backend/models/archive", "backend/models/neu_final_dataset_fullnames", "backend/models/evaluation_reports"]
+extend-exclude = [".venv", "data/raw/gc10", "data/processed/neu", "reports/runs"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
@@ -12,9 +12,9 @@ python_version = "3.13"
 strict = true
 follow_imports = "silent"
 ignore_missing_imports = true
-files = ["backend/config.py", "backend/automl_contract.py", "backend/inference.py", "backend/app.py", "backend/prediction_routing.py", "backend/uploads.py", "backend/image_preprocessing.py", "backend/vertex_ai_integration.py", "backend/models/evaluation_metrics.py", "backend/gc10_model.py", "backend/gc10_runtime.py", "backend/models/evaluate_gc10.py", "scripts/download_weights.py", "scripts/prepare_data.py", "scripts/scan_secrets.py"]
+files = ["backend/core/config.py", "backend/inference/automl_contract.py", "backend/inference/neu.py", "backend/api/app.py", "backend/inference/routing.py", "backend/api/uploads.py", "backend/inference/preprocessing.py", "backend/integrations/vertex_ai.py", "ml/evaluation_metrics.py", "backend/inference/gc10_model.py", "backend/inference/gc10.py", "ml/evaluate_gc10.py", "scripts/download_weights.py", "scripts/prepare_data.py", "scripts/scan_secrets.py"]
 explicit_package_bases = true
-mypy_path = ["backend", "backend/models"]
+mypy_path = ["."]
 
 [[tool.mypy.overrides]]
 module = ["torchvision.*"]
@@ -22,8 +22,8 @@ follow_imports = "skip"
 
 [tool.pytest.ini_options]
 addopts = "-p no:cacheprovider"
-testpaths = ["tests", "backend/models"]
-pythonpath = ["backend", "backend/models"]
+testpaths = ["tests"]
+pythonpath = ["."]
 markers = [
   "requires_weights: needs locally provisioned model checkpoints or TFLite exports",
   "requires_datasets: needs locally provisioned NEU or GC10 data",
@@ -31,5 +31,5 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["backend"]
-omit = ["backend/models/archive/*", "backend/models/evaluation_reports/*", "backend/models/neu_final_dataset_fullnames/*"]
+source = ["backend", "ml"]
+omit = ["data/raw/gc10/*", "reports/runs/*", "data/processed/neu/*"]

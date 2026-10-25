@@ -49,7 +49,7 @@ separate from deterministic evaluation preprocessing.
 
 ## Evaluation methodology
 
-[`evaluation_metrics.py`](backend/models/evaluation_metrics.py) contains the shared
+[`evaluation_metrics.py`](ml/evaluation_metrics.py) contains the shared
 metrics mathematics. The NEU evaluator uses Pandas for per-image prediction tables
 and grouped error analysis, and NumPy for confusion matrices, abstentions, and
 class-level statistics. GC10 uses multilabel precision, recall, F1 and average
@@ -65,11 +65,11 @@ holdout. New model choices must not be tuned against the reported test results.
 The README deliberately contains no measured performance figures. Inspect the
 machine-readable reports and their scope information:
 
-- [NEU AutoML report](backend/models/AutoML/automl_metrics.json)
-- [NEU CustomML report](backend/models/CustomML/custom_metrics_v2.json)
-- [GC10 baseline ? frozen ResNet18 backbone](backend/models/GC10/metrics.json)
-- [Evaluation audit summary](backend/models/evaluation_audit_summary.json)
-- [Evaluation audit and reproduction notes](EVALUATION_AUDIT.md)
+- [NEU AutoML report](reports/benchmarks/neu_automl.json)
+- [NEU CustomML report](reports/benchmarks/neu_custom.json)
+- [GC10 baseline ? frozen ResNet18 backbone](reports/benchmarks/gc10.json)
+- [Evaluation audit summary](reports/benchmarks/evaluation_audit_summary.json)
+- [Evaluation audit and reproduction notes](docs/EVALUATION_AUDIT.md)
 
 Raw local evaluation directories and datasets are excluded from Git. Dashboard
 pages read generated JSON; the GC10 page identifies whether its local checkpoint
@@ -110,7 +110,7 @@ bash scripts/download_weights.sh
 bash scripts/run.sh
 ```
 
-The weight verifier checks SHA-256 identities in [`artifacts/models.json`](artifacts/models.json).
+The weight verifier checks SHA-256 identities in [`models/registry.json`](models/registry.json).
 Release URLs are intentionally unset pending owner approval and redistribution
 provenance review. Existing approved local weights can be verified in place or
 restored using `--source-dir` with a local bundle that preserves manifest paths.
@@ -121,13 +121,13 @@ are unverified. Reference cards show labelled placeholders when those images are
 not bundled; inference uses images supplied by the user.
 
 The frontend uses `VITE_API_BASE_URL`; the backend uses the typed configuration
-in [`backend/config.py`](backend/config.py). Copy [`.env.example`](.env.example) to
+in [`backend/core/config.py`](backend/core/config.py). Copy [`.env.example`](.env.example) to
 `.env` if setup has not already done so. Frontend demo sign-in is disabled by
 default. `VITE_DEMO_MODE=true` explicitly enables demonstration controls; any
 `VITE_*` setting is public browser configuration, never a secret. There is no
 server-side authentication.
 
-Optional Vertex integration requires `backend/requirements-vertex.txt`,
+Optional Vertex integration requires `requirements/requirements-vertex.txt`,
 `ENABLE_VERTEX_AI=true`, and configured project/endpoint credentials. Do not place
 service-account files in the repository. A working local TFLite model takes
 priority; its inference failure is surfaced without silently issuing a paid call.
@@ -137,33 +137,33 @@ priority; its inference failure is surfaced without silently issuing a paid call
 Obtain datasets from their documented sources before verifying the frozen manifests:
 
 ```powershell
-.\scripts\prepare_data.ps1 --neu-root backend/models/neu_final_dataset_fullnames --gc10-root backend/models/archive
-.\scripts\train_neu.ps1 --data_dir ../neu_final_dataset_fullnames --output_dir outputs_new_run --seed 42
-.\scripts\train_gc10.ps1 --out-dir backend/models/GC10/outputs_local_v2
+.\scripts\prepare_data.ps1 --neu-root data/processed/neu --gc10-root data/raw/gc10
+.\scripts\train_neu.ps1 --data_dir data/processed/neu --output_dir models/CustomML/outputs_new_run --seed 42
+.\scripts\train_gc10.ps1 --out-dir models/GC10/outputs_local_v2
 ```
 
 Equivalent Bash wrappers have the same filenames with `.sh`. See the
 [data acquisition and verification instructions](data/SOURCES.md),
-[GC10 experiment guide](backend/models/GC10/README.md), and
-[shared evaluation guide](backend/models/SHARED_EVALUATION.md).
+[GC10 experiment guide](docs/GC10.md), and
+[shared evaluation guide](docs/SHARED_EVALUATION.md).
 
 ### Evaluate
 
 ```powershell
-.\scripts\evaluate.ps1 neu --test-dir backend/models/neu_final_dataset_fullnames/test --reference-dir backend/models/neu_final_dataset_fullnames/train --reference-dir backend/models/neu_final_dataset_fullnames/val --out-dir backend/models/evaluation_reports/new-neu-run
-.\scripts\evaluate.ps1 gc10 --out-dir backend/models/evaluation_reports/new-gc10-run
+.\scripts\evaluate.ps1 neu --test-dir data/processed/neu/test --reference-dir data/processed/neu/train --reference-dir data/processed/neu/val --out-dir reports/runs/new-neu-run
+.\scripts\evaluate.ps1 gc10 --out-dir reports/runs/new-gc10-run
 ```
 
 ```bash
-bash scripts/evaluate.sh neu --test-dir backend/models/neu_final_dataset_fullnames/test --reference-dir backend/models/neu_final_dataset_fullnames/train --reference-dir backend/models/neu_final_dataset_fullnames/val --out-dir backend/models/evaluation_reports/new-neu-run
-bash scripts/evaluate.sh gc10 --out-dir backend/models/evaluation_reports/new-gc10-run
+bash scripts/evaluate.sh neu --test-dir data/processed/neu/test --reference-dir data/processed/neu/train --reference-dir data/processed/neu/val --out-dir reports/runs/new-neu-run
+bash scripts/evaluate.sh gc10 --out-dir reports/runs/new-gc10-run
 ```
 
 ## Tests and CI
 
 ```powershell
-.\.venv\Scripts\python.exe -m ruff check backend tests scripts
-.\.venv\Scripts\python.exe -m ruff format --check backend tests scripts
+.\.venv\Scripts\python.exe -m ruff check backend ml tests scripts
+.\.venv\Scripts\python.exe -m ruff format --check backend ml tests scripts
 .\.venv\Scripts\python.exe -m mypy
 .\.venv\Scripts\python.exe -m pytest -m "not requires_weights and not requires_datasets and not live_api" --cov --cov-report=xml
 npm --prefix frontend run lint
@@ -199,6 +199,13 @@ and [Lv et al., Sensors, DOI: 10.3390/s20061562](https://doi.org/10.3390/s200615
 
 The code uses third-party architectures and libraries, and the AutoML artifact is
 an existing course export whose cloud training lineage remains unverified. See
-[third-party notices and publication permissions](THIRD_PARTY_NOTICES.md).
+[third-party notices and publication permissions](docs/THIRD_PARTY_NOTICES.md).
 No dataset or weight redistribution licence is inferred from public availability.
 A licence for original project code has not yet been selected by the owner.
+
+## Repository organization
+
+See [folder responsibilities](docs/STRUCTURE.md) and [deployment setup](docs/DEPLOYMENT.md).
+Training and evaluation live in `ml/`, tests in `tests/`, and Python dependency lists
+in `requirements/`. Datasets, checkpoints, and generated reports are separated into
+`data/`, `models/`, and `reports/`; see the folder guide for path compatibility.

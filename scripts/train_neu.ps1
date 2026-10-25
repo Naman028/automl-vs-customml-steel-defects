@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
-Push-Location "$PSScriptRoot\..\backend\models\CustomML"
+Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
-    & '..\..\..\.venv\Scripts\python.exe' -m trainer.train @args
+    & "$PSScriptRoot/../.venv/Scripts/python.exe" -m ml.neu.trainer.train @args
     if ($LASTEXITCODE) { throw 'NEU training failed' }
 } finally { Pop-Location }

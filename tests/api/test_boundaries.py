@@ -9,10 +9,10 @@ from fastapi.testclient import TestClient
 from PIL import Image
 import pytest
 
-import app
-import inference
-from prediction_routing import optional_prediction
-import vertex_ai_integration as vertex
+from backend.api import app
+from backend.inference import neu as inference
+from backend.inference.routing import optional_prediction
+from backend.integrations import vertex_ai as vertex
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_upload_validation(client, filename, content, mime, status):
 
 
 def test_upload_size_limit(client, monkeypatch):
-    import uploads
+    from backend.api import uploads
 
     monkeypatch.setattr(uploads, "SETTINGS", replace(uploads.SETTINGS, max_upload_bytes=4))
     response = client.post("/predict", files={"file": ("image.png", image_bytes(), "image/png")})

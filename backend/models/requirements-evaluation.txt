@@ -1,2 +1,0 @@
--r ../requirements-local.txt
--r ../requirements-metrics.txt

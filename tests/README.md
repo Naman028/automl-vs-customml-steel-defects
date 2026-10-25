@@ -1,7 +1,7 @@
 # Verification
 
-Install `backend/requirements-dev.txt` for fixture tests. The local TFLite runtime
-is separate in `backend/requirements-local.txt`; it is not required by fixture CI.
+Install `requirements/requirements-dev.txt` for fixture tests. The local TFLite runtime
+is separate in `requirements/requirements-local.txt`; it is not required by fixture CI.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -m "not requires_weights and not requires_datasets and not live_api" --cov --cov-report=xml

@@ -12,7 +12,7 @@ Set-StrictMode -Version Latest
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $backendPath = Join-Path $repoRoot "backend"
-Set-Location $backendPath
+Set-Location $repoRoot
 
 $existing = Get-CimInstance Win32_Process |
     Where-Object {
@@ -82,7 +82,7 @@ if ($env:ASSISTANT_MODE -eq "dataset") {
 
 $envFile = Join-Path $repoRoot '.env'
 if (Test-Path $envFile) {
-    python -m uvicorn app:app --env-file $envFile --reload --port $Port
+    python -m uvicorn backend.api.app:app --env-file $envFile --reload --port $Port
 } else {
-    python -m uvicorn app:app --reload --port $Port
+    python -m uvicorn backend.api.app:app --reload --port $Port
 }
