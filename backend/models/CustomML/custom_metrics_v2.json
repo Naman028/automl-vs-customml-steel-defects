@@ -1,21 +1,4 @@
 {
-  "metadata": {
-    "model_name": "Custom ML (ResNet18)",
-    "run_id": "custom_refined_deployed_20260718",
-    "timestamp": 1784371923,
-    "dataset_version": "neu_final_dataset",
-    "sample_count": 180,
-    "classes": [
-      "Crazing",
-      "Inclusion",
-      "Patches",
-      "Pitted_Surface",
-      "Rolled_in_Scale",
-      "Scratches"
-    ],
-    "evaluation_profile": "deployed_threshold",
-    "confidence_threshold": 0.55
-  },
   "core": {
     "accuracy": 0.9944444444444445,
     "raw_argmax_accuracy": 1.0,
@@ -23,25 +6,21 @@
     "recall": 0.9944444444444445,
     "f1": 0.9971751412429378,
     "confidence": 0.8996784526440832,
+    "coverage": 0.9944444444444445,
     "inference_ms": {
-      "mean": 21.784111667754285,
-      "p50": 20.2232500014361,
-      "p95": 29.66443998739122,
-      "min": 15.47389998449944,
-      "max": 69.55109999398701
+      "mean": 19.36475499985843,
+      "p50": 16.910750011447817,
+      "p95": 34.48231997899711,
+      "min": 11.490400065667927,
+      "max": 55.371300084516406
     }
   },
   "ops": {
+    "false_positive_rate": 0.0,
     "training_time": null,
-    "model_size_mb": 42.715,
+    "model_size_mb": 42.71485424041748,
     "gpu_required": false,
-    "setup_complexity": "medium",
-    "false_positive_rate": 0.0
-  },
-  "explainability": {
-    "feature_importance": [],
-    "focus_areas": [],
-    "advantages": []
+    "setup_complexity": "medium"
   },
   "details": {
     "confusion_matrix": [
@@ -93,6 +72,79 @@
         0,
         30
       ]
+    ],
+    "confusion_matrix_with_unknown": [
+      [
+        30,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        29,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        30,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        30,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        30,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        30,
+        0
+      ]
+    ],
+    "confusion_matrix_columns": [
+      "Crazing",
+      "Inclusion",
+      "Patches",
+      "Pitted_Surface",
+      "Rolled_in_Scale",
+      "Scratches",
+      "Unknown"
+    ],
+    "abstentions_by_class": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
     ],
     "y_true": [
       0,
@@ -640,13 +692,62 @@
       5,
       5
     ],
-    "abstentions_by_class": [
-      0,
-      1,
-      0,
-      0,
-      0,
-      0
+    "error_pairs": [
+      {
+        "true_label": "Inclusion",
+        "predicted_label": "Unknown",
+        "count": 1
+      }
+    ],
+    "per_class_metrics": [
+      {
+        "class_name": "Crazing",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 30,
+        "abstentions": 0
+      },
+      {
+        "class_name": "Inclusion",
+        "precision": 1.0,
+        "recall": 0.9666666666666667,
+        "f1": 0.983050847457627,
+        "support": 30,
+        "abstentions": 1
+      },
+      {
+        "class_name": "Patches",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 30,
+        "abstentions": 0
+      },
+      {
+        "class_name": "Pitted_Surface",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 30,
+        "abstentions": 0
+      },
+      {
+        "class_name": "Rolled_in_Scale",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 30,
+        "abstentions": 0
+      },
+      {
+        "class_name": "Scratches",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 30,
+        "abstentions": 0
+      }
     ],
     "probabilities": [
       [
@@ -2089,56 +2190,6 @@
         0.029203537851572037,
         0.7391476631164551
       ]
-    ],
-    "per_class_metrics": [
-      {
-        "class_name": "Crazing",
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0,
-        "support": 30,
-        "abstentions": 0
-      },
-      {
-        "class_name": "Inclusion",
-        "precision": 1.0,
-        "recall": 0.9666666666666667,
-        "f1": 0.983050847457627,
-        "support": 30,
-        "abstentions": 1
-      },
-      {
-        "class_name": "Patches",
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0,
-        "support": 30,
-        "abstentions": 0
-      },
-      {
-        "class_name": "Pitted_Surface",
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0,
-        "support": 30,
-        "abstentions": 0
-      },
-      {
-        "class_name": "Rolled_in_Scale",
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0,
-        "support": 30,
-        "abstentions": 0
-      },
-      {
-        "class_name": "Scratches",
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0,
-        "support": 30,
-        "abstentions": 0
-      }
     ],
     "pr_curves": {
       "Crazing": {
@@ -5497,28 +5548,28 @@
         1.0
       ],
       "precision": [
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
         1.0,
         1.0,
         1.0,
@@ -5550,28 +5601,28 @@
         0.0
       ],
       "recall": [
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
-        0.9944444444444445,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
         0.9944444444444445,
         0.9944444444444445,
         0.9944444444444445,
@@ -5662,5 +5713,54 @@
       "test": 180,
       "total": 1800
     }
+  },
+  "metadata": {
+    "model_name": "Custom ML (ResNet18)",
+    "run_id": "shared_1792921425",
+    "timestamp": 1792921425,
+    "dataset_version": "test",
+    "dataset_sha256": "0b5f2784bcfb540250ded72451294806a174b6453e48e631b9ae1ac54b0c9744",
+    "sample_count": 180,
+    "classes": [
+      "Crazing",
+      "Inclusion",
+      "Patches",
+      "Pitted_Surface",
+      "Rolled_in_Scale",
+      "Scratches"
+    ],
+    "confidence_threshold": 0.55,
+    "model_sha256": "bfb552b46efb287654623ff59994a04cad37d7d619115a6772b07101bd1b9a92",
+    "evaluation_profile": "internal_benchmark",
+    "reference_dirs": [
+      "backend/models/neu_final_dataset_fullnames/train",
+      "backend/models/neu_final_dataset_fullnames/val"
+    ],
+    "independence_verified": false,
+    "evaluation_scope": "Internal NEU benchmark; independent generalization unverified",
+    "limitation": "File and decoded-pixel overlap checked only; source groups and cloud training-job lineage need verification",
+    "automl_input_contract": {
+      "input_dtype": "<class 'numpy.uint8'>",
+      "input_shape": [
+        1,
+        224,
+        224,
+        3
+      ],
+      "input_quantization": [
+        0.007874015718698502,
+        128
+      ],
+      "normalization": {
+        "mean": [
+          127.5
+        ],
+        "std": [
+          127.5
+        ]
+      },
+      "label_order_verified_against_export": true
+    },
+    "audit_summary": "backend/models/evaluation_audit_summary.json"
   }
 }

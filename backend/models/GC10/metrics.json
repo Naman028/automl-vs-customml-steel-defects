@@ -1,0 +1,1082 @@
+{
+  "status": "trained",
+  "task": "GC10 image-level multilabel classification",
+  "classes": [
+    "punching_hole",
+    "welding_line",
+    "crescent_gap",
+    "water_spot",
+    "oil_spot",
+    "silk_spot",
+    "inclusion",
+    "rolled_pit",
+    "crease",
+    "waist_folding"
+  ],
+  "feature_extractor": "Frozen NEU-trained ResNet18; only the GC10 classifier head was trained",
+  "source": "GC10 archive; XML object labels converted to per-image presence labels",
+  "split_counts": {
+    "train": 1751,
+    "val": 176,
+    "test": 285
+  },
+  "group_counts": {
+    "train": 362,
+    "val": 45,
+    "test": 46
+  },
+  "split_method": "Group-disjoint filename capture tokens; fixed seed, all classes present",
+  "seed": 42,
+  "independence_verified": false,
+  "epochs_completed": 100,
+  "limitation": "Local group-held-out baseline. Capture tokens are inferred; independent camera generalization and dataset licensing remain unverified.",
+  "audit": {
+    "image_files": 2312,
+    "unique_filenames": 2300,
+    "annotations": 2294,
+    "usable_images": 2212,
+    "duplicate_copies_removed": 12,
+    "explicit_label_repairs": {
+      "10_yaozhed": 130
+    },
+    "excluded_annotations": [
+      {
+        "annotation": "img_01_SIS001522_00033.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001522_00033.jpg"
+      },
+      {
+        "annotation": "img_01_SIS001522_00045.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001522_00045.jpg"
+      },
+      {
+        "annotation": "img_01_SIS001577_00012.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001577_00012.jpg"
+      },
+      {
+        "annotation": "img_01_SIS001577_00020.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001577_00020.jpg"
+      },
+      {
+        "annotation": "img_01_SIS001577_00032.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001577_00032.jpg"
+      },
+      {
+        "annotation": "img_01_SIS001577_00041.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001577_00041.jpg"
+      },
+      {
+        "annotation": "img_01_SIS001577_00049.xml",
+        "reason": "Cannot infer capture group: img_01_SIS001577_00049.jpg"
+      },
+      {
+        "annotation": "img_02_425616500_00770.xml",
+        "reason": "unknown_label:d"
+      },
+      {
+        "annotation": "img_02_4406772100_00175.xml",
+        "reason": "no_objects"
+      },
+      {
+        "annotation": "img_02_SIS001491_00257.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001491_00257.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001491_00261.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001491_00261.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001491_00267.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001491_00267.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001491_00280.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001491_00280.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001491_00289.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001491_00289.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00004.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00004.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00007.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00007.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00012.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00012.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00026.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00026.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00028.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00028.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00031.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00031.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00036.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00036.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00555.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00555.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001522_00568.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001522_00568.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001533_00008.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001533_00008.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001533_00164.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001533_00164.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001533_00311.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001533_00311.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001540_00034.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001540_00034.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001540_00053.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001540_00053.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001540_00088.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001540_00088.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001540_00105.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001540_00105.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001561_01227.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001561_01227.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001561_01413.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001561_01413.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001564_01308.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001564_01308.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001564_01335.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001564_01335.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001574_00003.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001574_00003.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001577_00067.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001577_00067.jpg"
+      },
+      {
+        "annotation": "img_02_SIS001577_00072.xml",
+        "reason": "Cannot infer capture group: img_02_SIS001577_00072.jpg"
+      },
+      {
+        "annotation": "img_02_SIS002356_00001.xml",
+        "reason": "Cannot infer capture group: img_02_SIS002356_00001.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001491_00285.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001491_00285.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001491_00361.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001491_00361.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001494_00049.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001494_00049.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001533_00036.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001533_00036.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001533_00310.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001533_00310.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001533_00329.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001533_00329.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00771.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00771.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00772.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00772.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00773.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00773.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00775.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00775.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00776.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00776.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00778.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00778.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00782.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00782.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00785.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00785.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00786.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00786.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00788.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00788.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00789.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00789.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00792.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00792.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00794.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00794.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00798.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00798.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00800.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00800.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00801.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00801.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00805.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00805.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00809.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00809.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001540_00810.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001540_00810.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001546_00029.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001546_00029.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001546_00031.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001546_00031.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001546_00041.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001546_00041.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001546_00060.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001546_00060.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001559_00006.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001559_00006.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001561_01569.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001561_01569.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001577_00013.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001577_00013.jpg"
+      },
+      {
+        "annotation": "img_03_SIS001577_00019.xml",
+        "reason": "Cannot infer capture group: img_03_SIS001577_00019.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00009.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00009.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00010.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00010.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00012.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00012.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00038.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00038.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00040.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00040.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00045.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00045.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00046.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00046.jpg"
+      },
+      {
+        "annotation": "img_04_SIS001577_00052.xml",
+        "reason": "Cannot infer capture group: img_04_SIS001577_00052.jpg"
+      },
+      {
+        "annotation": "img_06_3402617700_00988.xml",
+        "reason": "no_objects"
+      },
+      {
+        "annotation": "img_06_SIS002344_00834.xml",
+        "reason": "Cannot infer capture group: img_06_SIS002344_00834.jpg"
+      },
+      {
+        "annotation": "img_07_SIS002353_00788.xml",
+        "reason": "Cannot infer capture group: img_07_SIS002353_00788.jpg"
+      }
+    ],
+    "images_without_annotations": 6,
+    "class_names": [
+      "punching_hole",
+      "welding_line",
+      "crescent_gap",
+      "water_spot",
+      "oil_spot",
+      "silk_spot",
+      "inclusion",
+      "rolled_pit",
+      "crease",
+      "waist_folding"
+    ],
+    "independence_verified": false,
+    "limitation": "Capture groups inferred from filename batch tokens; physical sheet IDs and licensing not independently verified."
+  },
+  "validation": {
+    "macro_f1": 0.5389632082196314,
+    "micro_f1": 0.5681818181818182,
+    "mean_average_precision": 0.5744295379581319,
+    "exact_match_accuracy": 0.25,
+    "per_class": [
+      {
+        "class_name": "punching_hole",
+        "precision": 0.7894736842105263,
+        "recall": 0.9375,
+        "f1": 0.8571428571428571,
+        "support": 32,
+        "threshold": 0.85
+      },
+      {
+        "class_name": "welding_line",
+        "precision": 0.8378378378378378,
+        "recall": 0.7209302325581395,
+        "f1": 0.775,
+        "support": 43,
+        "threshold": 0.9
+      },
+      {
+        "class_name": "crescent_gap",
+        "precision": 0.7058823529411765,
+        "recall": 0.8888888888888888,
+        "f1": 0.7868852459016393,
+        "support": 27,
+        "threshold": 0.65
+      },
+      {
+        "class_name": "water_spot",
+        "precision": 0.19696969696969696,
+        "recall": 0.52,
+        "f1": 0.2857142857142857,
+        "support": 25,
+        "threshold": 0.55
+      },
+      {
+        "class_name": "oil_spot",
+        "precision": 0.5769230769230769,
+        "recall": 0.46875,
+        "f1": 0.5172413793103449,
+        "support": 32,
+        "threshold": 0.9
+      },
+      {
+        "class_name": "silk_spot",
+        "precision": 0.5294117647058824,
+        "recall": 0.4864864864864865,
+        "f1": 0.5070422535211268,
+        "support": 37,
+        "threshold": 0.30000000000000004
+      },
+      {
+        "class_name": "inclusion",
+        "precision": 0.1935483870967742,
+        "recall": 0.6666666666666666,
+        "f1": 0.3,
+        "support": 9,
+        "threshold": 0.55
+      },
+      {
+        "class_name": "rolled_pit",
+        "precision": 0.05555555555555555,
+        "recall": 0.5,
+        "f1": 0.1,
+        "support": 2,
+        "threshold": 0.6
+      },
+      {
+        "class_name": "crease",
+        "precision": 0.5,
+        "recall": 0.5714285714285714,
+        "f1": 0.5333333333333333,
+        "support": 7,
+        "threshold": 0.9
+      },
+      {
+        "class_name": "waist_folding",
+        "precision": 0.8,
+        "recall": 0.6666666666666666,
+        "f1": 0.7272727272727273,
+        "support": 12,
+        "threshold": 0.85
+      }
+    ]
+  },
+  "test": {
+    "macro_f1": 0.45254328039171776,
+    "micro_f1": 0.45918367346938777,
+    "mean_average_precision": 0.6609382504231383,
+    "exact_match_accuracy": 0.18947368421052632,
+    "per_class": [
+      {
+        "class_name": "punching_hole",
+        "precision": 0.6976744186046512,
+        "recall": 0.9375,
+        "f1": 0.8,
+        "support": 32,
+        "threshold": 0.85
+      },
+      {
+        "class_name": "welding_line",
+        "precision": 0.8604651162790697,
+        "recall": 0.7254901960784313,
+        "f1": 0.7872340425531915,
+        "support": 51,
+        "threshold": 0.9
+      },
+      {
+        "class_name": "crescent_gap",
+        "precision": 0.7804878048780488,
+        "recall": 0.9142857142857143,
+        "f1": 0.8421052631578947,
+        "support": 35,
+        "threshold": 0.65
+      },
+      {
+        "class_name": "water_spot",
+        "precision": 0.22580645161290322,
+        "recall": 0.8484848484848485,
+        "f1": 0.35668789808917195,
+        "support": 33,
+        "threshold": 0.55
+      },
+      {
+        "class_name": "oil_spot",
+        "precision": 0.8095238095238095,
+        "recall": 0.4594594594594595,
+        "f1": 0.5862068965517241,
+        "support": 37,
+        "threshold": 0.9
+      },
+      {
+        "class_name": "silk_spot",
+        "precision": 0.5192307692307693,
+        "recall": 0.19424460431654678,
+        "f1": 0.28272251308900526,
+        "support": 139,
+        "threshold": 0.30000000000000004
+      },
+      {
+        "class_name": "inclusion",
+        "precision": 0.042105263157894736,
+        "recall": 0.8,
+        "f1": 0.08,
+        "support": 5,
+        "threshold": 0.55
+      },
+      {
+        "class_name": "rolled_pit",
+        "precision": 0.1111111111111111,
+        "recall": 0.6666666666666666,
+        "f1": 0.19047619047619047,
+        "support": 3,
+        "threshold": 0.6
+      },
+      {
+        "class_name": "crease",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2,
+        "threshold": 0.9
+      },
+      {
+        "class_name": "waist_folding",
+        "precision": 0.42857142857142855,
+        "recall": 1.0,
+        "f1": 0.6,
+        "support": 3,
+        "threshold": 0.85
+      }
+    ]
+  },
+  "thresholds_selected_on": "validation only",
+  "test_sample_count": 285,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.243739366531372,
+      "validation_loss": 0.7902805209159851
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.8644456267356873,
+      "validation_loss": 0.8798899054527283
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.8007513880729675,
+      "validation_loss": 0.9097573757171631
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.7663669586181641,
+      "validation_loss": 0.8993634581565857
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.7315934896469116,
+      "validation_loss": 0.8717667460441589
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.7000951170921326,
+      "validation_loss": 0.8410482406616211
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.6752684116363525,
+      "validation_loss": 0.8136974573135376
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.6570054888725281,
+      "validation_loss": 0.7923046946525574
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.6431861519813538,
+      "validation_loss": 0.7773716449737549
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.6309679746627808,
+      "validation_loss": 0.7679175734519958
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.6182931065559387,
+      "validation_loss": 0.7622430920600891
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.6047213077545166,
+      "validation_loss": 0.7585995197296143
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.5909358859062195,
+      "validation_loss": 0.7555245161056519
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.5779130458831787,
+      "validation_loss": 0.7518729567527771
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.5663685202598572,
+      "validation_loss": 0.7467974424362183
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.5565118789672852,
+      "validation_loss": 0.7397271990776062
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.5480247139930725,
+      "validation_loss": 0.730369508266449
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.5402630567550659,
+      "validation_loss": 0.7188220024108887
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.5326738357543945,
+      "validation_loss": 0.7056586742401123
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.5251091718673706,
+      "validation_loss": 0.6918060779571533
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.5177599191665649,
+      "validation_loss": 0.6783137321472168
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.5108582973480225,
+      "validation_loss": 0.6661974191665649
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.504448652267456,
+      "validation_loss": 0.6563569903373718
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.49833592772483826,
+      "validation_loss": 0.6494756937026978
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.49221891164779663,
+      "validation_loss": 0.6458858847618103
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.485954225063324,
+      "validation_loss": 0.6454287171363831
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.4797140955924988,
+      "validation_loss": 0.6473620533943176
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.47383806109428406,
+      "validation_loss": 0.6504362225532532
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.4685310423374176,
+      "validation_loss": 0.6532096862792969
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.4637221693992615,
+      "validation_loss": 0.6544894576072693
+    },
+    {
+      "epoch": 31,
+      "train_loss": 0.45916861295700073,
+      "validation_loss": 0.653660237789154
+    },
+    {
+      "epoch": 32,
+      "train_loss": 0.45465168356895447,
+      "validation_loss": 0.6507187485694885
+    },
+    {
+      "epoch": 33,
+      "train_loss": 0.4500896632671356,
+      "validation_loss": 0.6460537910461426
+    },
+    {
+      "epoch": 34,
+      "train_loss": 0.4455268681049347,
+      "validation_loss": 0.6401755809783936
+    },
+    {
+      "epoch": 35,
+      "train_loss": 0.44106629490852356,
+      "validation_loss": 0.633561909198761
+    },
+    {
+      "epoch": 36,
+      "train_loss": 0.4367981255054474,
+      "validation_loss": 0.626632571220398
+    },
+    {
+      "epoch": 37,
+      "train_loss": 0.43274521827697754,
+      "validation_loss": 0.619774580001831
+    },
+    {
+      "epoch": 38,
+      "train_loss": 0.42884936928749084,
+      "validation_loss": 0.6133527159690857
+    },
+    {
+      "epoch": 39,
+      "train_loss": 0.4250202476978302,
+      "validation_loss": 0.607688844203949
+    },
+    {
+      "epoch": 40,
+      "train_loss": 0.4212152659893036,
+      "validation_loss": 0.6030084490776062
+    },
+    {
+      "epoch": 41,
+      "train_loss": 0.41747361421585083,
+      "validation_loss": 0.5993734002113342
+    },
+    {
+      "epoch": 42,
+      "train_loss": 0.41386663913726807,
+      "validation_loss": 0.5966342091560364
+    },
+    {
+      "epoch": 43,
+      "train_loss": 0.41041749715805054,
+      "validation_loss": 0.5944598317146301
+    },
+    {
+      "epoch": 44,
+      "train_loss": 0.40708157420158386,
+      "validation_loss": 0.5924519896507263
+    },
+    {
+      "epoch": 45,
+      "train_loss": 0.4038023054599762,
+      "validation_loss": 0.5902848839759827
+    },
+    {
+      "epoch": 46,
+      "train_loss": 0.4005637466907501,
+      "validation_loss": 0.5877887606620789
+    },
+    {
+      "epoch": 47,
+      "train_loss": 0.3973805904388428,
+      "validation_loss": 0.5849599242210388
+    },
+    {
+      "epoch": 48,
+      "train_loss": 0.39425620436668396,
+      "validation_loss": 0.5819273591041565
+    },
+    {
+      "epoch": 49,
+      "train_loss": 0.3911781311035156,
+      "validation_loss": 0.5788993239402771
+    },
+    {
+      "epoch": 50,
+      "train_loss": 0.3881467580795288,
+      "validation_loss": 0.5760835409164429
+    },
+    {
+      "epoch": 51,
+      "train_loss": 0.38518190383911133,
+      "validation_loss": 0.5736055374145508
+    },
+    {
+      "epoch": 52,
+      "train_loss": 0.3822914958000183,
+      "validation_loss": 0.5714754462242126
+    },
+    {
+      "epoch": 53,
+      "train_loss": 0.37945398688316345,
+      "validation_loss": 0.5696265697479248
+    },
+    {
+      "epoch": 54,
+      "train_loss": 0.37664368748664856,
+      "validation_loss": 0.5679851770401001
+    },
+    {
+      "epoch": 55,
+      "train_loss": 0.37386253476142883,
+      "validation_loss": 0.5665041208267212
+    },
+    {
+      "epoch": 56,
+      "train_loss": 0.3711346387863159,
+      "validation_loss": 0.5651440620422363
+    },
+    {
+      "epoch": 57,
+      "train_loss": 0.3684752881526947,
+      "validation_loss": 0.5638367533683777
+    },
+    {
+      "epoch": 58,
+      "train_loss": 0.3658764362335205,
+      "validation_loss": 0.5624721050262451
+    },
+    {
+      "epoch": 59,
+      "train_loss": 0.36331906914711,
+      "validation_loss": 0.560923159122467
+    },
+    {
+      "epoch": 60,
+      "train_loss": 0.36079108715057373,
+      "validation_loss": 0.5590929985046387
+    },
+    {
+      "epoch": 61,
+      "train_loss": 0.35829275846481323,
+      "validation_loss": 0.5569567084312439
+    },
+    {
+      "epoch": 62,
+      "train_loss": 0.35582998394966125,
+      "validation_loss": 0.5545790791511536
+    },
+    {
+      "epoch": 63,
+      "train_loss": 0.35340598225593567,
+      "validation_loss": 0.5520985126495361
+    },
+    {
+      "epoch": 64,
+      "train_loss": 0.35101839900016785,
+      "validation_loss": 0.5496847033500671
+    },
+    {
+      "epoch": 65,
+      "train_loss": 0.34866276383399963,
+      "validation_loss": 0.5474839806556702
+    },
+    {
+      "epoch": 66,
+      "train_loss": 0.34633708000183105,
+      "validation_loss": 0.545571506023407
+    },
+    {
+      "epoch": 67,
+      "train_loss": 0.3440423607826233,
+      "validation_loss": 0.5439302325248718
+    },
+    {
+      "epoch": 68,
+      "train_loss": 0.3417802155017853,
+      "validation_loss": 0.5424677729606628
+    },
+    {
+      "epoch": 69,
+      "train_loss": 0.33955010771751404,
+      "validation_loss": 0.5410574078559875
+    },
+    {
+      "epoch": 70,
+      "train_loss": 0.33734917640686035,
+      "validation_loss": 0.5395857095718384
+    },
+    {
+      "epoch": 71,
+      "train_loss": 0.3351733088493347,
+      "validation_loss": 0.5379895567893982
+    },
+    {
+      "epoch": 72,
+      "train_loss": 0.3330208659172058,
+      "validation_loss": 0.536270022392273
+    },
+    {
+      "epoch": 73,
+      "train_loss": 0.3308941125869751,
+      "validation_loss": 0.5344833135604858
+    },
+    {
+      "epoch": 74,
+      "train_loss": 0.3287971019744873,
+      "validation_loss": 0.5327128171920776
+    },
+    {
+      "epoch": 75,
+      "train_loss": 0.3267306089401245,
+      "validation_loss": 0.5310361385345459
+    },
+    {
+      "epoch": 76,
+      "train_loss": 0.32469120621681213,
+      "validation_loss": 0.5294991731643677
+    },
+    {
+      "epoch": 77,
+      "train_loss": 0.3226742744445801,
+      "validation_loss": 0.528102695941925
+    },
+    {
+      "epoch": 78,
+      "train_loss": 0.3206782341003418,
+      "validation_loss": 0.5268045663833618
+    },
+    {
+      "epoch": 79,
+      "train_loss": 0.3187048137187958,
+      "validation_loss": 0.525535523891449
+    },
+    {
+      "epoch": 80,
+      "train_loss": 0.31675592064857483,
+      "validation_loss": 0.5242225527763367
+    },
+    {
+      "epoch": 81,
+      "train_loss": 0.31483128666877747,
+      "validation_loss": 0.5228139758110046
+    },
+    {
+      "epoch": 82,
+      "train_loss": 0.31292885541915894,
+      "validation_loss": 0.5212949514389038
+    },
+    {
+      "epoch": 83,
+      "train_loss": 0.311046838760376,
+      "validation_loss": 0.5196890830993652
+    },
+    {
+      "epoch": 84,
+      "train_loss": 0.30918484926223755,
+      "validation_loss": 0.5180463194847107
+    },
+    {
+      "epoch": 85,
+      "train_loss": 0.307343453168869,
+      "validation_loss": 0.5164255499839783
+    },
+    {
+      "epoch": 86,
+      "train_loss": 0.3055229187011719,
+      "validation_loss": 0.5148791670799255
+    },
+    {
+      "epoch": 87,
+      "train_loss": 0.3037233352661133,
+      "validation_loss": 0.5134420990943909
+    },
+    {
+      "epoch": 88,
+      "train_loss": 0.3019441068172455,
+      "validation_loss": 0.512126088142395
+    },
+    {
+      "epoch": 89,
+      "train_loss": 0.3001841604709625,
+      "validation_loss": 0.5109202265739441
+    },
+    {
+      "epoch": 90,
+      "train_loss": 0.29844263195991516,
+      "validation_loss": 0.5097943544387817
+    },
+    {
+      "epoch": 91,
+      "train_loss": 0.2967192530632019,
+      "validation_loss": 0.5087072849273682
+    },
+    {
+      "epoch": 92,
+      "train_loss": 0.29501423239707947,
+      "validation_loss": 0.5076175928115845
+    },
+    {
+      "epoch": 93,
+      "train_loss": 0.2933274805545807,
+      "validation_loss": 0.5064948797225952
+    },
+    {
+      "epoch": 94,
+      "train_loss": 0.29165834188461304,
+      "validation_loss": 0.5053290724754333
+    },
+    {
+      "epoch": 95,
+      "train_loss": 0.290006548166275,
+      "validation_loss": 0.5041316151618958
+    },
+    {
+      "epoch": 96,
+      "train_loss": 0.2883719205856323,
+      "validation_loss": 0.5029285550117493
+    },
+    {
+      "epoch": 97,
+      "train_loss": 0.286754310131073,
+      "validation_loss": 0.5017499923706055
+    },
+    {
+      "epoch": 98,
+      "train_loss": 0.2851531505584717,
+      "validation_loss": 0.5006164908409119
+    },
+    {
+      "epoch": 99,
+      "train_loss": 0.28356820344924927,
+      "validation_loss": 0.49953243136405945
+    },
+    {
+      "epoch": 100,
+      "train_loss": 0.28199923038482666,
+      "validation_loss": 0.4984852969646454
+    }
+  ],
+  "training_seconds": 185.55,
+  "backbone_sha256": "bfb552b46efb287654623ff59994a04cad37d7d619115a6772b07101bd1b9a92",
+  "dataset_manifest_sha256": "d24720bfeefb67ba3aeb3a1cdd3dbebb0a280bafb366a34e9abd063a36378cdb",
+  "model_sha256": "273282b54ff4ab0dcf25e7bfff869b7867af272bce7ec1defb95ed30802dd44a",
+  "experiment_date": "2026-10-25",
+  "training_configuration": {
+    "learning_rate": 0.01,
+    "weight_decay": 0.01,
+    "max_epochs": 100,
+    "early_stopping_patience": 10,
+    "positive_class_weights": "training split only",
+    "feature_normalization": "training split only",
+    "feature_extractor_frozen": true
+  }
+}

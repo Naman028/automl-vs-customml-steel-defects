@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from typing import Literal, List
 
@@ -23,23 +22,22 @@ from inference import (
     health_payload,
 )
 from schemas import AssistantRequest
+from config import SETTINGS
+from gc10_runtime import metrics_payload as gc10_metrics_payload, predict as gc10_predict
 
 
 logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    level=SETTINGS.log_level,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
 logger = logging.getLogger("industrial_defect_api")
 
 app = FastAPI(title="Industrial Defect API", version="1.0")
 
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000",
-).split(",")
+ALLOWED_ORIGINS = list(SETTINGS.allowed_origins)
 
 
-#cors middleware to allow requests from frontend origins during development and production
+# cors middleware to allow requests from frontend origins during development and production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -48,13 +46,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#Helper function to standardize error handling in prediction endpoints, ensuring consistent HTTP 500 responses for unhandled exceptions while allowing HTTPExceptions to pass through as intended.
+
+# Helper function to standardize error handling in prediction endpoints, ensuring consistent HTTP 500 responses for unhandled exceptions while allowing HTTPExceptions to pass through as intended.
 def _raise_unhandled_prediction_error(exc: Exception, log_message: str, detail: str):
     """Normalize unhandled exceptions into a stable HTTP 500 response."""
     if isinstance(exc, HTTPException):
         raise exc
     logger.exception(log_message)
     raise HTTPException(status_code=500, detail=detail)
+
 
 def _load_normalized_metrics(path: Path, model_path: Path):
     """Read and normalize metrics file into the shared comparison schema."""
@@ -105,9 +105,7 @@ async def predict_batch(
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
     if len(files) > MAX_BATCH_FILES:
-        raise HTTPException(
-            status_code=400, detail=f"Maximum {MAX_BATCH_FILES} images per batch"
-        )
+        raise HTTPException(status_code=400, detail=f"Maximum {MAX_BATCH_FILES} images per batch")
 
     results = []
     for file in files:
@@ -148,21 +146,38 @@ async def get_model_info():
     try:
         return model_info_payload()
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error getting model info: {str(exc)}")
+        _raise_unhandled_prediction_error(exc, "Failed to read model info", "Model information is unavailable")
 
 
 @app.get("/compare/metrics")
 async def compare_metrics():
     automl_path = BASE_DIR / "models" / "AutoML" / "automl_metrics.json"
     custom_v2_path = BASE_DIR / "models" / "CustomML" / "custom_metrics_v2.json"
-    custom_legacy_path = BASE_DIR / "models" / "CustomML" / "outputs" / "metrics.json"
     custom_model_path = Path(MODEL_PATH)
 
     automl_metrics = _load_normalized_metrics(automl_path, custom_model_path)
 
-    if custom_v2_path.exists():
-        custom_metrics = _load_normalized_metrics(custom_v2_path, custom_model_path)
-    else:
-        custom_metrics = _load_normalized_metrics(custom_legacy_path, custom_model_path)
+    custom_metrics = _load_normalized_metrics(custom_v2_path, custom_model_path)
 
     return build_comparison(automl_metrics, custom_metrics)
+
+
+@app.get("/gc10/metrics")
+def gc10_metrics():
+    try:
+        return gc10_metrics_payload()
+    except (OSError, ValueError) as error:
+        logger.exception("Failed to read GC10 results")
+        raise HTTPException(status_code=500, detail="GC10 results could not be read") from error
+
+
+@app.post("/gc10/predict")
+async def predict_gc10(file: UploadFile = File(...)):
+    image = await load_validated_image(file)
+    try:
+        return gc10_predict(image)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    except (ValueError, RuntimeError, OSError) as error:
+        logger.exception("GC10 prediction failed")
+        raise HTTPException(status_code=500, detail="GC10 prediction failed") from error

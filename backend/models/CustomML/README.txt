@@ -1,5 +1,12 @@
 ﻿CustomML Training and Evaluation Guide (with code-line references)
 
+Evaluation audit (2026-10-25): see ../../../EVALUATION_AUDIT.md.
+The line references below describe an earlier version and are approximate.
+Existing outputs/metrics.json is a legacy training record, not the history of
+the deployed best.pt. Use custom_metrics_v2.json for the audited internal result.
+Training now validates split identities, records a fingerprint, and requires a
+new output directory whenever best.pt already exists.
+
 Files covered:
 - trainer: backend/models/CustomML/trainer/train.py
 - evaluator: backend/models/CustomML/eval_custom_pt.py
@@ -57,7 +64,8 @@ What happens:
   - loss backward
   - optimizer step
 - Computes validation accuracy each epoch.
-- Saves best model to outputs/best.pt whenever val_acc improves.
+- Selects the checkpoint by validation loss, using accuracy to break near-ties.
+- Stops early when validation loss no longer improves.
 
 Important detail:
 - Checkpoint stores:
@@ -187,10 +195,10 @@ Minimum recommended set:
 ==================================================
 
 Train:
-python -m trainer.train --data_dir .\neu_final_dataset --output_dir outputs --epochs 8
+python -m trainer.train --data_dir ..\neu_final_dataset_fullnames --output_dir outputs_new_run --epochs 30
 
 Create v2 metrics:
-python eval_custom_pt.py --model outputs\best.pt --test_dir neu_final_dataset\test --out custom_metrics_v2.json
+python eval_custom_pt.py --model outputs\best.pt --test_dir ..\neu_final_dataset_fullnames\test --out custom_metrics_v2.json
 
 
 

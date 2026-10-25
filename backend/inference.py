@@ -4,7 +4,6 @@ This module owns model lifecycle (load once at startup) and exposes helpers
 consumed by route handlers in `app.py`.
 """
 
-import io
 import logging
 import os
 import time
@@ -14,46 +13,37 @@ from typing import Dict, List, Literal, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn.functional as F
-from fastapi import HTTPException, UploadFile
-from PIL import Image, UnidentifiedImageError
-from torchvision import transforms
+from fastapi import HTTPException
+from PIL import Image
 from torchvision.models import resnet18
 
-from label_normalization import CANONICAL_AUTOML_LABELS, normalize_automl_label, normalize_automl_labels
+from label_normalization import (
+    CANONICAL_AUTOML_LABELS,
+    normalize_automl_label,
+    normalize_automl_labels,
+)
+from automl_contract import prepare_image, read_contract, embedded_labels
+from config import SETTINGS
+from image_preprocessing import resnet_transform
+from prediction_routing import optional_prediction
+from uploads import load_validated_image as load_validated_image
 
-try:
-    from vertex_ai_integration import predict_with_automl
-
-    VERTEX_AI_AVAILABLE = bool(
-        os.getenv("GCP_PROJECT_ID") and os.getenv("VERTEX_AI_AUTOML_ENDPOINT_ID")
-    )
-except ImportError:
-    VERTEX_AI_AVAILABLE = False
-    predict_with_automl = None
-
-try:
-    from tflite_runtime.interpreter import Interpreter as TFLiteInterpreter
-except Exception:
+VERTEX_AI_AVAILABLE = False
+predict_with_automl = None
+if SETTINGS.enable_vertex:
     try:
-        import tensorflow as tf
+        from vertex_ai_integration import predict_with_automl
 
-        TFLiteInterpreter = tf.lite.Interpreter
-    except Exception:
-        TFLiteInterpreter = None
-
+        VERTEX_AI_AVAILABLE = bool(SETTINGS.project_id and SETTINGS.endpoint_id)
+    except ImportError:
+        pass
 
 logger = logging.getLogger("industrial_defect_api")
 
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = os.getenv(
-    "CUSTOM_MODEL_PATH", str(BASE_DIR / "models" / "CustomML" / "outputs" / "best.pt")
-)
-AUTOML_TFLITE_PATH = os.getenv(
-    "AUTOML_TFLITE_PATH", str(BASE_DIR / "models" / "AutoML" / "AutoML model.tflite")
-)
-AUTOML_LABELS_PATH = os.getenv(
-    "AUTOML_LABELS_PATH", str(BASE_DIR / "models" / "AutoML" / "labels.txt")
-)
+MODEL_PATH = str(SETTINGS.custom_model)
+AUTOML_TFLITE_PATH = str(SETTINGS.automl_model)
+AUTOML_LABELS_PATH = str(SETTINGS.automl_labels)
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 CLASS_NAMES = ["Cr", "In", "Pa", "PS", "RS", "Sc"]
@@ -62,57 +52,37 @@ IMG_SIZE = 224
 CONF_THRESHOLD_NO_DEFECT = 0.55
 TOP_K_DEFAULT = 3
 MAX_BATCH_FILES = 50
-MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(5 * 1024 * 1024)))
+MAX_UPLOAD_BYTES = SETTINGS.max_upload_bytes
 AUTOML_UNAVAILABLE_DETAIL = (
-    "AutoML not configured. Provide local TFLite model or set Vertex AI environment variables."
+    "Local AutoML TFLite is unavailable. Install requirements-local.txt and provide the exported model. "
+    "Cloud fallback requires explicit ENABLE_VERTEX_AI=true and configured Vertex AI credentials."
 )
 DEFAULT_AUTOML_LABELS = CANONICAL_AUTOML_LABELS.copy()
-ALLOWED_IMAGE_MIME = {
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "image/bmp",
-}
+model = None
+preprocess = None
 
-logger.info("Loading model from: %s", MODEL_PATH)
-logger.info("Using device: %s", DEVICE)
-logger.info("Initial classes: %s", CLASS_NAMES)
 
-model = resnet18(weights=None)
-model.fc = torch.nn.Linear(model.fc.in_features, len(CLASS_NAMES))
-
-try:
-    # Load training checkpoint once and align runtime metadata (classes/image size).
-    ckpt = torch.load(MODEL_PATH, map_location=DEVICE)
-    if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
-        state = ckpt["model_state_dict"]
-        if "classes" in ckpt and isinstance(ckpt["classes"], list):
-            CLASS_NAMES = ckpt["classes"]
-            model.fc = torch.nn.Linear(model.fc.in_features, len(CLASS_NAMES))
-            logger.info("Loaded classes from checkpoint: %s", CLASS_NAMES)
-        if "image_size" in ckpt:
-            IMG_SIZE = int(ckpt["image_size"])
-            logger.info("Loaded image size from checkpoint: %s", IMG_SIZE)
+def _load_custom_model():
+    global model, preprocess, CLASS_NAMES, IMG_SIZE
+    if model is not None:
+        return model
+    if not Path(MODEL_PATH).exists():
+        raise HTTPException(status_code=503, detail="Custom model weights are not available")
+    checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=True)
+    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+        state = checkpoint["model_state_dict"]
+        CLASS_NAMES = checkpoint.get("classes", CLASS_NAMES)
+        IMG_SIZE = int(checkpoint.get("image_size", IMG_SIZE))
     else:
-        state = ckpt
+        state = checkpoint
+    loaded = resnet18(weights=None)
+    loaded.fc = torch.nn.Linear(loaded.fc.in_features, len(CLASS_NAMES))
+    loaded.load_state_dict(state, strict=True)
+    model = loaded.to(DEVICE).eval()
+    preprocess = resnet_transform(IMG_SIZE)
+    logger.info("Custom model loaded device=%s classes=%s", DEVICE, CLASS_NAMES)
+    return model
 
-    model.load_state_dict(state, strict=True)
-    model = model.to(DEVICE).eval()
-    logger.info(
-        "Model loaded successfully. Classes: %s, Image size: %s", CLASS_NAMES, IMG_SIZE
-    )
-except Exception as exc:
-    logger.exception("Failed to load custom model")
-    raise RuntimeError(f"Failed to load model: {exc}")
-
-preprocess = transforms.Compose(
-    [
-        transforms.Resize((IMG_SIZE, IMG_SIZE)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ]
-)
 
 AUTOML_TFLITE_AVAILABLE = False
 AUTOML_LABELS: List[str] = []
@@ -128,21 +98,27 @@ def _load_automl_tflite() -> None:
     global AUTOML_OUTPUT_DETAILS
     global AUTOML_INTERPRETER
 
-    # AutoML is optional; custom model routes remain available without it.
-    if TFLiteInterpreter is None:
-        return
-
     model_path = Path(AUTOML_TFLITE_PATH)
     if not model_path.exists():
         return
+    try:
+        from tflite_runtime.interpreter import Interpreter as TFLiteInterpreter
+    except ImportError:
+        try:
+            import tensorflow as tf
+
+            TFLiteInterpreter = tf.lite.Interpreter
+        except ImportError:
+            logger.info("Local TFLite runtime is not installed")
+            return
 
     labels_path = Path(AUTOML_LABELS_PATH)
     if labels_path.exists():
         AUTOML_LABELS = normalize_automl_labels(
             [
-            line.strip()
-            for line in labels_path.read_text(encoding="utf-8").splitlines()
-            if line.strip()
+                line.strip()
+                for line in labels_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
             ]
         )
     else:
@@ -153,6 +129,10 @@ def _load_automl_tflite() -> None:
     AUTOML_INTERPRETER = TFLiteInterpreter(model_path=str(model_path))
     AUTOML_INTERPRETER.allocate_tensors()
     AUTOML_INPUT_DETAILS = AUTOML_INTERPRETER.get_input_details()
+    AUTOML_INPUT_DETAILS[0]["normalization_contract"] = read_contract(str(model_path.resolve()))
+    exported_labels = normalize_automl_labels(embedded_labels(model_path))
+    if AUTOML_LABELS != exported_labels:
+        raise ValueError("AutoML labels.txt does not match embedded output label order")
     AUTOML_OUTPUT_DETAILS = AUTOML_INTERPRETER.get_output_details()
     AUTOML_TFLITE_AVAILABLE = True
     logger.info("AutoML TFLite loaded. Labels: %s", AUTOML_LABELS)
@@ -168,9 +148,10 @@ def _top_k(probs: np.ndarray, k: int) -> List[Dict[str, float]]:
 
 
 def _predict_probs(img: Image.Image) -> np.ndarray:
+    loaded = _load_custom_model()
     x: torch.Tensor = preprocess(img.convert("RGB")).unsqueeze(0).to(DEVICE)
     with torch.no_grad():
-        logits = model(x)
+        logits = loaded(x)
         probs = F.softmax(logits, dim=1).cpu().numpy()[0]
     return probs
 
@@ -194,15 +175,11 @@ def _build_custom_prediction_payload(probs: np.ndarray, top_k: int) -> Dict:
     top_idx = int(np.argmax(probs))
     top_prob = float(probs[top_idx])
     top_class = CLASS_NAMES[top_idx]
-    predicted_class = (
-        "No defect / Unknown" if top_prob < CONF_THRESHOLD_NO_DEFECT else top_class
-    )
+    predicted_class = "No defect / Unknown" if top_prob < CONF_THRESHOLD_NO_DEFECT else top_class
     return {
         "predicted_class": predicted_class,
         "confidence": top_prob,
-        "all_probabilities": {
-            CLASS_NAMES[i]: float(probs[i]) for i in range(len(CLASS_NAMES))
-        },
+        "all_probabilities": {CLASS_NAMES[i]: float(probs[i]) for i in range(len(CLASS_NAMES))},
         "top_k": _top_k(probs, top_k),
         "raw_top_class": top_class,
         "threshold": CONF_THRESHOLD_NO_DEFECT,
@@ -216,24 +193,8 @@ def _automl_tflite_predict(img: Image.Image) -> Dict:
     start = time.time()
     input_details = AUTOML_INPUT_DETAILS[0]
     output_details = AUTOML_OUTPUT_DETAILS[0]
-    _, h, w, _ = input_details["shape"]
-
-    # Match TFLite input contract (size, dtype, and quantization, if any).
-    x = np.array(img.convert("RGB").resize((w, h)))
-    input_dtype = input_details["dtype"]
-    if input_dtype == np.float32:
-        x = x.astype(np.float32) / 255.0
-    else:
-        scale, zero = input_details.get("quantization", (0.0, 0))
-        if scale and scale > 0:
-            x = x.astype(np.float32) / 255.0
-            x = x / scale + zero
-            info = np.iinfo(input_dtype)
-            x = np.clip(x, info.min, info.max).astype(input_dtype)
-        else:
-            x = x.astype(input_dtype)
-
-    AUTOML_INTERPRETER.set_tensor(input_details["index"], np.expand_dims(x, axis=0))
+    x = prepare_image(img, input_details, input_details["normalization_contract"])
+    AUTOML_INTERPRETER.set_tensor(input_details["index"], x)
     AUTOML_INTERPRETER.invoke()
     output = AUTOML_INTERPRETER.get_tensor(output_details["index"])
 
@@ -255,9 +216,7 @@ def _automl_tflite_predict(img: Image.Image) -> Dict:
 
     labeled_probabilities: Dict[str, float] = {}
     for i in range(len(probs)):
-        label = normalize_automl_label(
-            AUTOML_LABELS[i] if i < len(AUTOML_LABELS) else f"index_{i}"
-        )
+        label = normalize_automl_label(AUTOML_LABELS[i] if i < len(AUTOML_LABELS) else f"index_{i}")
         labeled_probabilities[label] = labeled_probabilities.get(label, 0.0) + float(probs[i])
 
     return {
@@ -288,21 +247,15 @@ def _predict_automl_required(img: Image.Image) -> Dict:
     raise HTTPException(status_code=503, detail=AUTOML_UNAVAILABLE_DETAIL)
 
 
-def _predict_automl_optional(img: Image.Image, context: str) -> Tuple[Optional[Dict], Optional[str]]:
-    # Dual-model flows should not fail hard if AutoML branch errors.
-    if AUTOML_TFLITE_AVAILABLE:
-        try:
-            return _automl_tflite_predict(img), None
-        except Exception as exc:
-            logger.warning("AutoML TFLite prediction failed in %s: %s", context, exc)
-            return None, str(exc)
-    if VERTEX_AI_AVAILABLE:
-        try:
-            return predict_with_automl(img), None
-        except Exception as exc:
-            logger.warning("Vertex AutoML prediction failed in %s: %s", context, exc)
-            return None, str(exc)
-    return None, None
+def _predict_automl_optional(
+    img: Image.Image, context: str
+) -> Tuple[Optional[Dict], Optional[str]]:
+    return optional_prediction(
+        img,
+        _automl_tflite_predict if AUTOML_TFLITE_AVAILABLE else None,
+        predict_with_automl if VERTEX_AI_AVAILABLE else None,
+        context,
+    )
 
 
 def _predict_both_models(img: Image.Image, context: str) -> Dict:
@@ -336,9 +289,7 @@ def predict_single(img: Image.Image, model_type: Literal["custom", "automl", "bo
     return _predict_both_models(img, "/predict both mode")
 
 
-def predict_batch_single(
-    img: Image.Image, model_type: Literal["custom", "automl", "both"]
-) -> Dict:
+def predict_batch_single(img: Image.Image, model_type: Literal["custom", "automl", "both"]) -> Dict:
     if model_type == "custom":
         return infer(img)
     if model_type == "automl":
@@ -361,33 +312,10 @@ def predict_debug_payload(img: Image.Image, top_k: int) -> Dict:
     return payload
 
 
-async def load_validated_image(file: UploadFile) -> Image.Image:
-    # Shared upload guard used by /predict, /predict/batch, and /predict/debug.
-    if file.content_type not in ALLOWED_IMAGE_MIME:
-        raise HTTPException(
-            status_code=415, detail=f"Unsupported content type: {file.content_type}"
-        )
-
-    content = await file.read()
-    if not content:
-        raise HTTPException(status_code=400, detail="Empty file uploaded")
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(
-            status_code=413, detail=f"File too large. Max allowed: {MAX_UPLOAD_BYTES} bytes"
-        )
-
-    try:
-        image = Image.open(io.BytesIO(content))
-        image.verify()
-        return Image.open(io.BytesIO(content)).convert("RGB")
-    except (UnidentifiedImageError, OSError) as exc:
-        raise HTTPException(status_code=400, detail="Invalid image file") from exc
-
-
 def health_payload() -> Dict:
     return {
         "status": "ok",
-        "model_loaded": True,
+        "model_loaded": model is not None,
         "device": DEVICE,
         "classes": CLASS_NAMES,
         "automl_tflite_loaded": AUTOML_TFLITE_AVAILABLE,
@@ -397,9 +325,10 @@ def health_payload() -> Dict:
 
 def test_model_payload() -> Dict:
     try:
+        loaded = _load_custom_model()
         test_input = torch.zeros(1, 3, IMG_SIZE, IMG_SIZE).to(DEVICE)
         with torch.no_grad():
-            output = model(test_input)
+            output = loaded(test_input)
             probs = F.softmax(output, dim=1).cpu().numpy()[0]
         return {
             "model_loaded": True,
@@ -418,6 +347,7 @@ def test_model_payload() -> Dict:
 
 
 def model_info_payload() -> Dict:
+    _load_custom_model()
     model_size = os.path.getsize(MODEL_PATH) / (1024 * 1024)
     return {
         "model_path": Path(MODEL_PATH).name,

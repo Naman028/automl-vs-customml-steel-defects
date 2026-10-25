@@ -1,9 +1,12 @@
+import logging
 import glob
 import argparse
 import json
 import time
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 from sklearn.metrics import (
@@ -21,6 +24,8 @@ except ImportError:
         sys.path.append(str(_BACKEND_DIR))
     from label_normalization import normalize_automl_label, normalize_automl_labels
 
+from automl_contract import prepare_image, read_contract, embedded_labels
+
 try:
     from tflite_runtime.interpreter import Interpreter as TFLiteInterpreter
 except Exception:
@@ -37,7 +42,9 @@ _CANDIDATE_TEST_DIRS = [
     MODELS_DIR / "neu_final_dataset_fullnames" / "test",
     BASE_DIR.parent / "CustomML" / "neu_final_dataset" / "test",
 ]
-DEFAULT_DATASET_TEST_DIR = next((p for p in _CANDIDATE_TEST_DIRS if p.exists()), _CANDIDATE_TEST_DIRS[0])
+DEFAULT_DATASET_TEST_DIR = next(
+    (p for p in _CANDIDATE_TEST_DIRS if p.exists()), _CANDIDATE_TEST_DIRS[0]
+)
 DEFAULT_TFLITE_MODEL_PATH = BASE_DIR / "AutoML model.tflite"
 DEFAULT_LABELS_PATH = BASE_DIR / "labels.txt"
 FOLDER_TO_LABEL = {
@@ -116,6 +123,7 @@ def load_interpreter(model_path: Path):
     interpreter = TFLiteInterpreter(model_path=str(model_path))
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()[0]
+    input_details["normalization_contract"] = read_contract(str(model_path.resolve()))
     output_details = interpreter.get_output_details()[0]
     return interpreter, input_details, output_details
 
@@ -123,24 +131,8 @@ def load_interpreter(model_path: Path):
 def preprocess_image(img_path: Path, input_details: dict):
     from PIL import Image
 
-    _, h, w, _ = input_details["shape"]
-    img = Image.open(img_path).convert("RGB").resize((w, h))
-    x = np.array(img)
-
-    input_dtype = input_details["dtype"]
-    if input_dtype == np.float32:
-        x = x.astype(np.float32) / 255.0
-    else:
-        scale, zero = input_details.get("quantization", (0.0, 0))
-        if scale and scale > 0:
-            x = x.astype(np.float32) / 255.0
-            x = x / scale + zero
-            info = np.iinfo(input_dtype)
-            x = np.clip(x, info.min, info.max).astype(input_dtype)
-        else:
-            x = x.astype(input_dtype)
-
-    return np.expand_dims(x, axis=0)
+    with Image.open(img_path) as img:
+        return prepare_image(img, input_details, input_details["normalization_contract"])
 
 
 def infer_one(interpreter, input_details, output_details, img_path: Path):
@@ -207,6 +199,8 @@ def main():
         raise RuntimeError(f"Missing labels file: {labels_path}")
 
     labels = load_labels(labels_path)
+    if labels != embedded_labels(tflite_model_path):
+        raise ValueError("AutoML labels must match the embedded output label order")
     interpreter, in_det, out_det = load_interpreter(tflite_model_path)
 
     class_folders = sorted([p for p in dataset_test_dir.iterdir() if p.is_dir()])
@@ -217,8 +211,7 @@ def main():
     missing = [c for c in resolved_gt_names if c not in label_to_idx]
     if missing:
         raise RuntimeError(
-            f"These test folders are not in labels.txt: {missing}\n"
-            f"labels.txt has: {labels}"
+            f"These test folders are not in labels.txt: {missing}\nlabels.txt has: {labels}"
         )
 
     y_true = []
@@ -306,7 +299,9 @@ def main():
         "val": count_images(dataset_root / "val"),
         "test": count_images(dataset_test_dir),
     }
-    dataset_counts["total"] = dataset_counts["train"] + dataset_counts["val"] + dataset_counts["test"]
+    dataset_counts["total"] = (
+        dataset_counts["train"] + dataset_counts["val"] + dataset_counts["test"]
+    )
 
     per_class_metrics = []
     for idx, cls in enumerate(labels):
@@ -368,11 +363,17 @@ def main():
     }
 
     out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"Wrote: {out_json} ({sample_count} samples)")
-    print(
-        f"Accuracy={acc:.4f}  MacroF1={float(f1):.4f}  MeanLatency={inference_ms['mean']:.2f}ms"
+    logger.info(" ".join(str(value) for value in (f"Wrote: {out_json} ({sample_count} samples)",)))
+    logger.info(
+        " ".join(
+            str(value)
+            for value in (
+                f"Accuracy={acc:.4f}  MacroF1={float(f1):.4f}  MeanLatency={inference_ms['mean']:.2f}ms",
+            )
+        )
     )
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     main()

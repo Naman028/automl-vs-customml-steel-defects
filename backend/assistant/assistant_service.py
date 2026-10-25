@@ -1,10 +1,10 @@
-import os
 import re
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from label_normalization import to_display_label
+from config import assistant_mode
 
 DOCS_PATH = Path(__file__).with_name("knowledge_base.md")
 DATASET_INDEX_PATH = Path(__file__).with_name("assistant_dataset_index.json")
@@ -96,10 +96,39 @@ DEFECT_PRECAUTIONS = {
 }
 
 STOPWORDS = {
-    "the", "a", "an", "and", "or", "to", "of", "in", "is", "are", "was", "were",
-    "what", "why", "how", "can", "i", "we", "you", "about", "tell", "me", "it",
-    "this", "that", "for", "on", "with", "as", "do", "does",
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "to",
+    "of",
+    "in",
+    "is",
+    "are",
+    "was",
+    "were",
+    "what",
+    "why",
+    "how",
+    "can",
+    "i",
+    "we",
+    "you",
+    "about",
+    "tell",
+    "me",
+    "it",
+    "this",
+    "that",
+    "for",
+    "on",
+    "with",
+    "as",
+    "do",
+    "does",
 }
+
 
 def _load_docs() -> List[Tuple[str, str]]:
     if not DOCS_PATH.exists():
@@ -119,9 +148,11 @@ def _load_docs() -> List[Tuple[str, str]]:
         docs.append((title, body))
     return docs
 
+
 def _tokenize(text: str) -> List[str]:
     words = re.findall(r"[a-zA-Z0-9]+", text.lower())
     return [w for w in words if w not in STOPWORDS]
+
 
 def _score_doc(query_tokens: List[str], doc_text: str) -> int:
     if not query_tokens:
@@ -139,7 +170,9 @@ def _load_dataset_index() -> Optional[Dict]:
         return None
 
 
-def _score_dataset_doc(query_tf: Dict[str, int], doc: Dict, idf: Dict[str, float], avg_len: float) -> float:
+def _score_dataset_doc(
+    query_tf: Dict[str, int], doc: Dict, idf: Dict[str, float], avg_len: float
+) -> float:
     # BM25 with conservative defaults for short QA prompts.
     k1 = 1.2
     b = 0.75
@@ -185,14 +218,11 @@ def _is_defect_question(query_tokens: List[str]) -> bool:
 
 def _is_defect_catalog_question(question: str, query_tokens: List[str]) -> bool:
     q = question.lower()
-    return (
-        "defects" in query_tokens
-        and (
-            "how many" in q
-            or bool(re.search(r"\b[1-9]\d*\b", q))
-            or any(word in query_tokens for word in {"six", "types", "list", "all"})
-            or "type" in query_tokens
-        )
+    return "defects" in query_tokens and (
+        "how many" in q
+        or bool(re.search(r"\b[1-9]\d*\b", q))
+        or any(word in query_tokens for word in {"six", "types", "list", "all"})
+        or "type" in query_tokens
     )
 
 
@@ -230,18 +260,15 @@ def _is_comparison_question(query_tokens: List[str]) -> bool:
 
 def _is_precaution_question(query_tokens: List[str]) -> bool:
     return any(
-        tok in {"precaution", "precautions", "prevent", "prevented", "prevention", "avoid", "reduce"}
+        tok
+        in {"precaution", "precautions", "prevent", "prevented", "prevention", "avoid", "reduce"}
         for tok in query_tokens
     )
 
 
 def _matched_defect_labels(query_tokens: List[str]) -> set:
     token_set = set(query_tokens)
-    return {
-        label
-        for label, keywords in LABEL_KEYWORDS.items()
-        if token_set.intersection(keywords)
-    }
+    return {label for label, keywords in LABEL_KEYWORDS.items() if token_set.intersection(keywords)}
 
 
 def _prediction_label(prediction: Optional[Dict]) -> Optional[str]:
@@ -277,10 +304,30 @@ def _has_detail_intent(query_tokens: List[str]) -> bool:
     return bool(
         set(query_tokens).intersection(
             {
-                "cause", "causes", "root", "prevent", "prevented", "prevention", "avoid",
-                "reduce", "fix", "action", "inspect", "inspection", "check",
-                "confirm", "lab", "serious", "severity", "impact", "risk",
-                "acceptable", "reject", "identify", "visual", "look",
+                "cause",
+                "causes",
+                "root",
+                "prevent",
+                "prevented",
+                "prevention",
+                "avoid",
+                "reduce",
+                "fix",
+                "action",
+                "inspect",
+                "inspection",
+                "check",
+                "confirm",
+                "lab",
+                "serious",
+                "severity",
+                "impact",
+                "risk",
+                "acceptable",
+                "reject",
+                "identify",
+                "visual",
+                "look",
             }
         )
     )
@@ -326,7 +373,9 @@ def _focus_dataset_answer(text: str, query_tokens: List[str]) -> str:
         selected.append(("Likely root causes", "causes"))
     if tokens.intersection({"identify", "detect", "visual", "look", "appearance"}):
         selected.append(("Visual cues", "visual"))
-    if tokens.intersection({"prevent", "prevented", "prevention", "avoid", "reduce", "fix", "action"}):
+    if tokens.intersection(
+        {"prevent", "prevented", "prevention", "avoid", "reduce", "fix", "action"}
+    ):
         selected.extend([("Recommended actions", "actions"), ("Next steps", "next")])
     if tokens.intersection({"serious", "severity", "impact", "risk", "acceptable", "reject"}):
         selected.append(("Impact and risk", "impact"))
@@ -351,7 +400,9 @@ def _build_defect_catalog_answer(include_precautions: bool) -> str:
     for label in DEFECT_ORDER:
         display = DEFECT_DISPLAY_NAMES.get(label, to_display_label(label))
         if include_precautions:
-            lines.append(f"- {display}: {DEFECT_PRECAUTIONS.get(label, 'Apply standard QA controls.')}")
+            lines.append(
+                f"- {display}: {DEFECT_PRECAUTIONS.get(label, 'Apply standard QA controls.')}"
+            )
         else:
             lines.append(f"- {display}")
     lines.append("Use consistent lighting and clear surface images for reliable detection.")
@@ -418,7 +469,9 @@ def _answer_operational_question(question: str, query_tokens: List[str]) -> Opti
             "reject low-confidence predictions, inspect top-k score gaps, and retrain with representative normal/no-defect "
             "and hard-negative camera images."
         )
-    if tokens.intersection({"severe", "severity", "serious"}) and tokens.intersection({"defect", "defects"}):
+    if tokens.intersection({"severe", "severity", "serious"}) and tokens.intersection(
+        {"defect", "defects"}
+    ):
         return (
             "No defect class is always the most severe. Severity depends on depth, area, location, product grade, forming "
             "and fatigue requirements, and the applicable acceptance standard. Deep inclusions or pits can be structurally "
@@ -434,7 +487,9 @@ def _answer_operational_question(question: str, query_tokens: List[str]) -> Opti
             "No—not reliably. Rust is not one of the six trained classes. The model may force it into a known class or "
             "return Unknown, so rust detection requires labeled rust and normal-surface data plus separate validation."
         )
-    if tokens.intersection({"aluminum", "aluminium"}) and tokens.intersection({"detect", "defect", "defects"}):
+    if tokens.intersection({"aluminum", "aluminium"}) and tokens.intersection(
+        {"detect", "defect", "defects"}
+    ):
         return (
             "No—not reliably. The classifier was trained for six steel-surface defect classes, not aluminum defects. "
             "Aluminum requires its own representative dataset, training, and independent evaluation."
@@ -531,6 +586,7 @@ def retrieve_from_dataset(
         )
     return results
 
+
 def retrieve_docs(question: str, top_k: int = 2) -> List[Dict[str, str]]:
     docs = _load_docs()
     if not docs:
@@ -544,8 +600,11 @@ def retrieve_docs(question: str, top_k: int = 2) -> List[Dict[str, str]]:
     scored.sort(reverse=True, key=lambda x: x[0])
     results = []
     for score, title, body in scored[:top_k]:
-        results.append({"title": title, "content": _sanitize_answer_text(body), "score": str(score)})
+        results.append(
+            {"title": title, "content": _sanitize_answer_text(body), "score": str(score)}
+        )
     return results
+
 
 def _format_top_k(top_k: List[Dict[str, float]]) -> str:
     parts = []
@@ -555,11 +614,15 @@ def _format_top_k(top_k: List[Dict[str, float]]) -> str:
         parts.append(f"{name}: {conf:.1%}")
     return ", ".join(parts)
 
+
 def _defect_title(defect_code: str) -> str:
     return DEFECT_LABELS.get(defect_code, to_display_label(defect_code))
 
+
 def explain_prediction(prediction: Dict) -> str:
-    predicted_class = prediction.get("raw_top_class") or prediction.get("predicted_class", "Unknown")
+    predicted_class = prediction.get("raw_top_class") or prediction.get(
+        "predicted_class", "Unknown"
+    )
     confidence = float(prediction.get("confidence", 0.0))
     threshold = float(prediction.get("threshold", 0.0))
     top_k = prediction.get("top_k", [])
@@ -575,17 +638,20 @@ def explain_prediction(prediction: Dict) -> str:
         parts.append(f"Top alternatives: {top_k_text}.")
     return " ".join(parts)
 
+
 def answer_question(question: str, prediction: Optional[Dict] = None) -> Dict:
     response_parts = []
     query_tokens = _tokenize(question)
     explicit_labels = _matched_defect_labels(query_tokens)
     uses_prediction = bool(prediction) and _uses_prediction_context(question, query_tokens)
-    context_label = _prediction_label(prediction) if uses_prediction and not explicit_labels else None
+    context_label = (
+        _prediction_label(prediction) if uses_prediction and not explicit_labels else None
+    )
 
     if uses_prediction and _asks_for_prediction_explanation(question):
         response_parts.append(explain_prediction(prediction))
 
-    mode = os.getenv("ASSISTANT_MODE", "local").strip().lower()
+    mode = assistant_mode()
     is_metal = _is_metal_question(query_tokens)
     is_defect = _is_defect_question(query_tokens) or bool(context_label)
     is_catalog = _is_defect_catalog_question(question, query_tokens)
@@ -594,7 +660,11 @@ def answer_question(question: str, prediction: Optional[Dict] = None) -> Dict:
     operational_answer = _answer_operational_question(question, query_tokens)
 
     docs: List[Dict[str, str]] = []
-    if uses_prediction and _asks_for_prediction_explanation(question) and not _has_detail_intent(query_tokens):
+    if (
+        uses_prediction
+        and _asks_for_prediction_explanation(question)
+        and not _has_detail_intent(query_tokens)
+    ):
         pass
     elif operational_answer:
         response_parts.append(operational_answer)

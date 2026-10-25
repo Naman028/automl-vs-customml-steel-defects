@@ -1,6 +1,6 @@
 Crazing
 Inclusion
 Scratches
-Rolled_in_Scale
 Pitted_Surface
+Rolled_in_Scale
 Patches

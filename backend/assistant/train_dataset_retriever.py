@@ -1,9 +1,12 @@
+import logging
 import json
 import math
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, List
+
+logger = logging.getLogger(__name__)
 
 
 DATASET_DIR = Path(__file__).with_name("neu_defect_assistant_dataset")
@@ -85,7 +88,9 @@ def build_index(rows: List[Dict]) -> Dict:
         # weighting while the answer remains the returned content only.
         question_text = re.sub(r"\[IMAGE:[^\]]+\]", "", row["input"])
         row_type = str(row.get("metadata", {}).get("type", ""))
-        retrieval_text = f"{question_text} {question_text} {question_text} {label} {label} {label} {row_type}"
+        retrieval_text = (
+            f"{question_text} {question_text} {question_text} {label} {label} {label} {row_type}"
+        )
         tokens = tokenize(retrieval_text)
         tf = Counter(tokens)
         unique_terms = set(tf.keys())
@@ -130,9 +135,10 @@ def main() -> None:
 
     index = build_index(rows)
     INDEX_PATH.write_text(json.dumps(index, ensure_ascii=False), encoding="utf-8")
-    print(f"Wrote retrieval index: {INDEX_PATH}")
-    print(f"Documents indexed: {index['doc_count']}")
+    logger.info(" ".join(str(value) for value in (f"Wrote retrieval index: {INDEX_PATH}",)))
+    logger.info(" ".join(str(value) for value in (f"Documents indexed: {index['doc_count']}",)))
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     main()

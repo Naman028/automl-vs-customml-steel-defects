@@ -1,0 +1,157 @@
+{
+  "audit_date": "2026-10-25",
+  "dataset_audit": {
+    "image_count": 1800,
+    "counts": {
+      "test/Crazing": 30,
+      "test/Inclusion": 30,
+      "test/Patches": 30,
+      "test/Pitted_Surface": 30,
+      "test/Rolled_in_Scale": 30,
+      "test/Scratches": 30,
+      "train/Crazing": 240,
+      "train/Inclusion": 240,
+      "train/Patches": 240,
+      "train/Pitted_Surface": 240,
+      "train/Rolled_in_Scale": 240,
+      "train/Scratches": 240,
+      "val/Crazing": 30,
+      "val/Inclusion": 30,
+      "val/Patches": 30,
+      "val/Pitted_Surface": 30,
+      "val/Rolled_in_Scale": 30,
+      "val/Scratches": 30
+    },
+    "exact_cross_split_groups": {
+      "sha256": [],
+      "decoded_sha256": []
+    },
+    "near_duplicate_candidate_count": 0,
+    "phash_max_distance": 6,
+    "automl_import_audit": {
+      "test_images_listed_as_automl_train": [],
+      "test_images_listed_as_automl_val": [],
+      "duplicate_source_keys": [],
+      "per_split": {
+        "train": {
+          "local_count": 1440,
+          "imported_count": 1440,
+          "missing_from_import": []
+        },
+        "val": {
+          "local_count": 180,
+          "imported_count": 180,
+          "missing_from_import": []
+        },
+        "test": {
+          "local_count": 180,
+          "imported_count": 180,
+          "missing_from_import": []
+        }
+      },
+      "limitation": "Local CSV split intent only; no verified cloud training-job lineage"
+    },
+    "independence_verified": false,
+    "limitations": [
+      "Perceptual hashes are screening heuristics, not proof of common source.",
+      "Sheet/session identities and cloud training-job lineage are unavailable.",
+      "Existing test scores have already informed development."
+    ]
+  },
+  "prediction_controls": {
+    "sample_count": 180,
+    "seed": 42,
+    "permutation_count": 1000,
+    "independence_verified": false,
+    "conditions": {
+      "opaque_original": {
+        "custom": {
+          "raw_accuracy": 1.0,
+          "deployed_accuracy": 0.9944444444444445,
+          "coverage": 0.9944444444444445,
+          "mean_confidence": 0.8996784526440832,
+          "shuffled_label_mean_accuracy": 0.16661666666666664,
+          "shuffled_label_max_accuracy": 0.25,
+          "independent_sklearn_check": "passed",
+          "baseline_prediction_agreement": 1.0
+        },
+        "automl": {
+          "raw_accuracy": 1.0,
+          "deployed_accuracy": 1.0,
+          "coverage": 1.0,
+          "mean_confidence": 0.840885096622838,
+          "shuffled_label_mean_accuracy": 0.16661666666666664,
+          "shuffled_label_max_accuracy": 0.25,
+          "independent_sklearn_check": "passed",
+          "baseline_prediction_agreement": 1.0
+        }
+      },
+      "blank": {
+        "custom": {
+          "raw_accuracy": 0.16666666666666666,
+          "deployed_accuracy": 0.0,
+          "coverage": 0.0,
+          "mean_confidence": 0.4402887225151062,
+          "shuffled_label_mean_accuracy": 0.16666666666666663,
+          "shuffled_label_max_accuracy": 0.16666666666666666,
+          "independent_sklearn_check": "passed"
+        },
+        "automl": {
+          "raw_accuracy": 0.16666666666666666,
+          "deployed_accuracy": 0.16666666666666666,
+          "coverage": 1.0,
+          "mean_confidence": 0.21960784494876862,
+          "shuffled_label_mean_accuracy": 0.16666666666666663,
+          "shuffled_label_max_accuracy": 0.16666666666666666,
+          "independent_sklearn_check": "passed"
+        }
+      },
+      "shuffled_pixels": {
+        "custom": {
+          "raw_accuracy": 0.25555555555555554,
+          "deployed_accuracy": 0.16111111111111112,
+          "coverage": 0.5277777777777778,
+          "mean_confidence": 0.5587220205201043,
+          "shuffled_label_mean_accuracy": 0.16643888888888886,
+          "shuffled_label_max_accuracy": 0.22777777777777777,
+          "independent_sklearn_check": "passed"
+        },
+        "automl": {
+          "raw_accuracy": 0.39444444444444443,
+          "deployed_accuracy": 0.39444444444444443,
+          "coverage": 1.0,
+          "mean_confidence": 0.3358352849053012,
+          "shuffled_label_mean_accuracy": 0.16491666666666663,
+          "shuffled_label_max_accuracy": 0.23333333333333334,
+          "independent_sklearn_check": "passed"
+        }
+      },
+      "blur_low_contrast": {
+        "custom": {
+          "raw_accuracy": 0.4,
+          "deployed_accuracy": 0.2388888888888889,
+          "coverage": 0.48333333333333334,
+          "mean_confidence": 0.573227063483662,
+          "shuffled_label_mean_accuracy": 0.16642222222222222,
+          "shuffled_label_max_accuracy": 0.24444444444444444,
+          "independent_sklearn_check": "passed"
+        },
+        "automl": {
+          "raw_accuracy": 0.36666666666666664,
+          "deployed_accuracy": 0.36666666666666664,
+          "coverage": 1.0,
+          "mean_confidence": 0.5264332882232137,
+          "shuffled_label_mean_accuracy": 0.16761666666666666,
+          "shuffled_label_max_accuracy": 0.2388888888888889,
+          "independent_sklearn_check": "passed"
+        }
+      }
+    },
+    "limitation": "Controls and synthetic perturbations test evaluator behavior, not independent generalization."
+  },
+  "model_sha256": {
+    "custom": "bfb552b46efb287654623ff59994a04cad37d7d619115a6772b07101bd1b9a92",
+    "automl": "b8989ac30eff1ceec4c8b4a588b2263e7170029e458e7ee6980d8f4fe2b02292"
+  },
+  "status": "Internal benchmark only; cloud training lineage and independent generalization unverified"
+}

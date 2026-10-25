@@ -88,7 +88,7 @@ def _derive_feature_importance(metrics: Dict) -> List[Dict]:
                 {
                     "feature": f"{name} pattern quality",
                     "importance": round(float(importance), 1),
-                    "description": f"Derived from class-level validation performance for {name}.",
+                    "description": f"Derived from class-level evaluation performance for {name}.",
                 }
             )
         rows.sort(key=lambda x: x["importance"], reverse=True)
@@ -152,7 +152,7 @@ def _derive_advantages(metrics: Dict, model_hint: str) -> List[str]:
     if _is_number(size_mb):
         advantages.append(f"Model size: {float(size_mb):.2f} MB.")
     if _is_number(acc):
-        advantages.append(f"Validation accuracy: {float(acc) * 100:.1f}%.")
+        advantages.append(f"Evaluation accuracy: {float(acc) * 100:.1f}%.")
     if _is_number(fpr):
         advantages.append(f"False positive rate: {float(fpr) * 100:.2f}%.")
     if model_hint == "automl":
@@ -196,7 +196,9 @@ def read_json_file(path: Path) -> Dict:
         raise HTTPException(status_code=500, detail=f"Failed to parse JSON {path}: {exc}")
 
 
-def normalize_metrics(raw: Dict, metrics_path: Path, model_path: Path, class_names: List[str]) -> Dict:
+def normalize_metrics(
+    raw: Dict, metrics_path: Path, model_path: Path, class_names: List[str]
+) -> Dict:
     # If the file already matches the v2 schema, keep it untouched.
     if isinstance(raw.get("metadata"), dict) and isinstance(raw.get("core"), dict):
         return raw
@@ -275,11 +277,42 @@ def build_comparison(automl_metrics: Dict, custom_metrics: Dict) -> Dict:
 
     # Core comparison set for the main table/cards. Higher/lower direction is explicit.
     metric_specs = [
-        ("accuracy", "Accuracy", True, automl_metrics["core"].get("accuracy"), custom_metrics["core"].get("accuracy")),
-        ("precision", "Precision", True, automl_metrics["core"].get("precision"), custom_metrics["core"].get("precision")),
-        ("recall", "Recall", True, automl_metrics["core"].get("recall"), custom_metrics["core"].get("recall")),
-        ("f1", "F1 Score", True, automl_metrics["core"].get("f1"), custom_metrics["core"].get("f1")),
-        ("confidence", "Confidence", True, automl_metrics["core"].get("confidence"), custom_metrics["core"].get("confidence")),
+        (
+            "accuracy",
+            "Accuracy",
+            True,
+            automl_metrics["core"].get("accuracy"),
+            custom_metrics["core"].get("accuracy"),
+        ),
+        (
+            "precision",
+            "Precision",
+            True,
+            automl_metrics["core"].get("precision"),
+            custom_metrics["core"].get("precision"),
+        ),
+        (
+            "recall",
+            "Recall",
+            True,
+            automl_metrics["core"].get("recall"),
+            custom_metrics["core"].get("recall"),
+        ),
+        (
+            "f1",
+            "F1 Score",
+            True,
+            automl_metrics["core"].get("f1"),
+            custom_metrics["core"].get("f1"),
+        ),
+        # Confidence measures certainty, not correctness or calibration.
+        (
+            "confidence",
+            "Confidence",
+            None,
+            automl_metrics["core"].get("confidence"),
+            custom_metrics["core"].get("confidence"),
+        ),
         (
             "inference_ms_mean",
             "Inference Time",
@@ -294,13 +327,21 @@ def build_comparison(automl_metrics: Dict, custom_metrics: Dict) -> Dict:
             automl_metrics["ops"].get("false_positive_rate"),
             custom_metrics["ops"].get("false_positive_rate"),
         ),
-        ("model_size_mb", "Model Size", False, automl_metrics["ops"].get("model_size_mb"), custom_metrics["ops"].get("model_size_mb")),
+        (
+            "model_size_mb",
+            "Model Size",
+            False,
+            automl_metrics["ops"].get("model_size_mb"),
+            custom_metrics["ops"].get("model_size_mb"),
+        ),
     ]
 
     automl_train_secs = _parse_duration_seconds(automl_metrics["ops"].get("training_time"))
     custom_train_secs = _parse_duration_seconds(custom_metrics["ops"].get("training_time"))
     if automl_train_secs is not None and custom_train_secs is not None:
-        metric_specs.append(("training_time_seconds", "Training Time", False, automl_train_secs, custom_train_secs))
+        metric_specs.append(
+            ("training_time_seconds", "Training Time", False, automl_train_secs, custom_train_secs)
+        )
 
     wins = {"automl": 0, "custom": 0}
     per_metric_winners: Dict[str, str] = {}
@@ -308,7 +349,7 @@ def build_comparison(automl_metrics: Dict, custom_metrics: Dict) -> Dict:
 
     for metric_key, label, higher_is_better, automl_val, custom_val in metric_specs:
         winner = "none"
-        if _is_number(automl_val) and _is_number(custom_val):
+        if higher_is_better is not None and _is_number(automl_val) and _is_number(custom_val):
             if abs(float(automl_val) - float(custom_val)) <= 1e-9:
                 winner = "tie"
             elif higher_is_better:
