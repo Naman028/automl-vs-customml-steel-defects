@@ -8,7 +8,8 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Any, List, Literal, Optional, Tuple, cast
+from numpy.typing import NDArray
 
 import numpy as np
 import torch
@@ -25,18 +26,23 @@ from label_normalization import (
 from automl_contract import prepare_image, read_contract, embedded_labels
 from config import SETTINGS
 from image_preprocessing import resnet_transform
-from prediction_routing import optional_prediction
+from prediction_routing import optional_prediction, Predictor
 from uploads import load_validated_image as load_validated_image
 
 VERTEX_AI_AVAILABLE = False
-predict_with_automl = None
+predict_with_automl: Predictor | None = None
 if SETTINGS.enable_vertex:
     try:
-        from vertex_ai_integration import predict_with_automl
+        from vertex_ai_integration import predict_with_automl as vertex_predict
+
+        predict_with_automl = vertex_predict
 
         VERTEX_AI_AVAILABLE = bool(SETTINGS.project_id and SETTINGS.endpoint_id)
     except ImportError:
         pass
+
+Prediction = dict[str, Any]
+Array = NDArray[Any]
 
 logger = logging.getLogger("industrial_defect_api")
 
@@ -58,11 +64,11 @@ AUTOML_UNAVAILABLE_DETAIL = (
     "Cloud fallback requires explicit ENABLE_VERTEX_AI=true and configured Vertex AI credentials."
 )
 DEFAULT_AUTOML_LABELS = CANONICAL_AUTOML_LABELS.copy()
-model = None
-preprocess = None
+model: torch.nn.Module | None = None
+preprocess: Any = None
 
 
-def _load_custom_model():
+def _load_custom_model() -> torch.nn.Module:
     global model, preprocess, CLASS_NAMES, IMG_SIZE
     if model is not None:
         return model
@@ -86,9 +92,9 @@ def _load_custom_model():
 
 AUTOML_TFLITE_AVAILABLE = False
 AUTOML_LABELS: List[str] = []
-AUTOML_INPUT_DETAILS = None
-AUTOML_OUTPUT_DETAILS = None
-AUTOML_INTERPRETER = None
+AUTOML_INPUT_DETAILS: list[dict[str, Any]] | None = None
+AUTOML_OUTPUT_DETAILS: list[dict[str, Any]] | None = None
+AUTOML_INTERPRETER: Any = None
 
 
 def _load_automl_tflite() -> None:
@@ -141,28 +147,28 @@ def _load_automl_tflite() -> None:
 _load_automl_tflite()
 
 
-def _top_k(probs: np.ndarray, k: int) -> List[Dict[str, float]]:
+def _top_k(probs: Array, k: int) -> List[dict[str, float]]:
     k = max(1, min(int(k), len(CLASS_NAMES)))
     idxs = np.argsort(probs)[::-1][:k]
     return [{"class_name": CLASS_NAMES[i], "confidence": float(probs[i])} for i in idxs]
 
 
-def _predict_probs(img: Image.Image) -> np.ndarray:
+def _predict_probs(img: Image.Image) -> Array:
     loaded = _load_custom_model()
     x: torch.Tensor = preprocess(img.convert("RGB")).unsqueeze(0).to(DEVICE)
     with torch.no_grad():
         logits = loaded(x)
         probs = F.softmax(logits, dim=1).cpu().numpy()[0]
-    return probs
+    return cast(Array, probs)
 
 
-def _softmax_np(x: np.ndarray) -> np.ndarray:
+def _softmax_np(x: Array) -> Array:
     x = x - np.max(x)
     exp = np.exp(x)
-    return exp / np.sum(exp)
+    return cast(Array, exp / np.sum(exp))
 
 
-def _to_probabilities(scores: np.ndarray) -> np.ndarray:
+def _to_probabilities(scores: Array) -> Array:
     scores = scores.astype(np.float32)
     if np.all(scores >= 0.0) and np.all(scores <= 1.0):
         total = float(np.sum(scores))
@@ -171,7 +177,7 @@ def _to_probabilities(scores: np.ndarray) -> np.ndarray:
     return _softmax_np(scores)
 
 
-def _build_custom_prediction_payload(probs: np.ndarray, top_k: int) -> Dict:
+def _build_custom_prediction_payload(probs: Array, top_k: int) -> Prediction:
     top_idx = int(np.argmax(probs))
     top_prob = float(probs[top_idx])
     top_class = CLASS_NAMES[top_idx]
@@ -186,11 +192,12 @@ def _build_custom_prediction_payload(probs: np.ndarray, top_k: int) -> Dict:
     }
 
 
-def _automl_tflite_predict(img: Image.Image) -> Dict:
+def _automl_tflite_predict(img: Image.Image) -> Prediction:
     if not AUTOML_TFLITE_AVAILABLE:
         raise RuntimeError("AutoML TFLite model not available")
 
     start = time.time()
+    assert AUTOML_INPUT_DETAILS is not None and AUTOML_OUTPUT_DETAILS is not None
     input_details = AUTOML_INPUT_DETAILS[0]
     output_details = AUTOML_OUTPUT_DETAILS[0]
     x = prepare_image(img, input_details, input_details["normalization_contract"])
@@ -214,7 +221,7 @@ def _automl_tflite_predict(img: Image.Image) -> Dict:
         AUTOML_LABELS[top_idx] if top_idx < len(AUTOML_LABELS) else f"index_{top_idx}"
     )
 
-    labeled_probabilities: Dict[str, float] = {}
+    labeled_probabilities: dict[str, float] = {}
     for i in range(len(probs)):
         label = normalize_automl_label(AUTOML_LABELS[i] if i < len(AUTOML_LABELS) else f"index_{i}")
         labeled_probabilities[label] = labeled_probabilities.get(label, 0.0) + float(probs[i])
@@ -239,17 +246,17 @@ def _automl_tflite_predict(img: Image.Image) -> Dict:
     }
 
 
-def _predict_automl_required(img: Image.Image) -> Dict:
+def _predict_automl_required(img: Image.Image) -> Prediction:
     if AUTOML_TFLITE_AVAILABLE:
         return _automl_tflite_predict(img)
-    if VERTEX_AI_AVAILABLE:
+    if VERTEX_AI_AVAILABLE and predict_with_automl is not None:
         return predict_with_automl(img)
     raise HTTPException(status_code=503, detail=AUTOML_UNAVAILABLE_DETAIL)
 
 
 def _predict_automl_optional(
     img: Image.Image, context: str
-) -> Tuple[Optional[Dict], Optional[str]]:
+) -> Tuple[Optional[Prediction], Optional[str]]:
     return optional_prediction(
         img,
         _automl_tflite_predict if AUTOML_TFLITE_AVAILABLE else None,
@@ -258,7 +265,7 @@ def _predict_automl_optional(
     )
 
 
-def _predict_both_models(img: Image.Image, context: str) -> Dict:
+def _predict_both_models(img: Image.Image, context: str) -> Prediction:
     result = {"custom": infer(img), "automl": None, "model_type": "both"}
     automl_result, automl_error = _predict_automl_optional(img, context)
     result["automl"] = automl_result
@@ -267,7 +274,7 @@ def _predict_both_models(img: Image.Image, context: str) -> Dict:
     return result
 
 
-def infer(img: Image.Image) -> Dict:
+def infer(img: Image.Image) -> Prediction:
     start = time.time()
     probs = _predict_probs(img)
     payload = _build_custom_prediction_payload(probs, TOP_K_DEFAULT)
@@ -281,7 +288,7 @@ def infer(img: Image.Image) -> Dict:
     return payload
 
 
-def predict_single(img: Image.Image, model_type: Literal["custom", "automl", "both"]) -> Dict:
+def predict_single(img: Image.Image, model_type: Literal["custom", "automl", "both"]) -> Prediction:
     if model_type == "custom":
         return infer(img)
     if model_type == "automl":
@@ -289,13 +296,15 @@ def predict_single(img: Image.Image, model_type: Literal["custom", "automl", "bo
     return _predict_both_models(img, "/predict both mode")
 
 
-def predict_batch_single(img: Image.Image, model_type: Literal["custom", "automl", "both"]) -> Dict:
+def predict_batch_single(
+    img: Image.Image, model_type: Literal["custom", "automl", "both"]
+) -> Prediction:
     if model_type == "custom":
         return infer(img)
     if model_type == "automl":
         if AUTOML_TFLITE_AVAILABLE:
             return _automl_tflite_predict(img)
-        if VERTEX_AI_AVAILABLE:
+        if VERTEX_AI_AVAILABLE and predict_with_automl is not None:
             return predict_with_automl(img)
         raise RuntimeError(AUTOML_UNAVAILABLE_DETAIL)
 
@@ -304,7 +313,7 @@ def predict_batch_single(img: Image.Image, model_type: Literal["custom", "automl
     return {"custom": custom_result, "automl": automl_result, "automl_error": automl_error}
 
 
-def predict_debug_payload(img: Image.Image, top_k: int) -> Dict:
+def predict_debug_payload(img: Image.Image, top_k: int) -> Prediction:
     probs = _predict_probs(img)
     payload = _build_custom_prediction_payload(probs, top_k)
     payload["classes"] = CLASS_NAMES
@@ -312,7 +321,7 @@ def predict_debug_payload(img: Image.Image, top_k: int) -> Dict:
     return payload
 
 
-def health_payload() -> Dict:
+def health_payload() -> Prediction:
     return {
         "status": "ok",
         "model_loaded": model is not None,
@@ -323,7 +332,7 @@ def health_payload() -> Dict:
     }
 
 
-def test_model_payload() -> Dict:
+def test_model_payload() -> Prediction:
     try:
         loaded = _load_custom_model()
         test_input = torch.zeros(1, 3, IMG_SIZE, IMG_SIZE).to(DEVICE)
@@ -346,7 +355,7 @@ def test_model_payload() -> Dict:
         return {"model_loaded": False, "error": str(exc)}
 
 
-def model_info_payload() -> Dict:
+def model_info_payload() -> Prediction:
     _load_custom_model()
     model_size = os.path.getsize(MODEL_PATH) / (1024 * 1024)
     return {

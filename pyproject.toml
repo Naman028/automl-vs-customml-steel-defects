@@ -12,7 +12,7 @@ python_version = "3.13"
 strict = true
 follow_imports = "silent"
 ignore_missing_imports = true
-files = ["backend/config.py", "backend/prediction_routing.py", "backend/uploads.py", "backend/image_preprocessing.py", "backend/vertex_ai_integration.py", "backend/models/evaluation_metrics.py", "backend/gc10_model.py", "backend/gc10_runtime.py", "backend/models/evaluate_gc10.py", "scripts/download_weights.py", "scripts/prepare_data.py", "scripts/scan_secrets.py"]
+files = ["backend/config.py", "backend/automl_contract.py", "backend/inference.py", "backend/app.py", "backend/prediction_routing.py", "backend/uploads.py", "backend/image_preprocessing.py", "backend/vertex_ai_integration.py", "backend/models/evaluation_metrics.py", "backend/gc10_model.py", "backend/gc10_runtime.py", "backend/models/evaluate_gc10.py", "scripts/download_weights.py", "scripts/prepare_data.py", "scripts/scan_secrets.py"]
 explicit_package_bases = true
 mypy_path = ["backend", "backend/models"]
 

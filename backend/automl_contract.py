@@ -8,13 +8,16 @@ import struct
 import zipfile
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
+from numpy.typing import NDArray
+from PIL import Image
 
 import numpy as np
 from flatbuffers.table import Table
 from flatbuffers.number_types import Uint8Flags
 
 
-def _tables(table, field):
+def _tables(table: Table, field: int) -> list[Table]:
     offset = table.Offset(4 + 2 * field)
     if not offset:
         return []
@@ -24,7 +27,7 @@ def _tables(table, field):
     ]
 
 
-def _floats(table, field):
+def _floats(table: Table, field: int) -> list[float]:
     offset = table.Offset(4 + 2 * field)
     if not offset:
         raise ValueError("Missing normalization values")
@@ -34,7 +37,7 @@ def _floats(table, field):
 
 
 @lru_cache(maxsize=8)
-def read_contract(model_path):
+def read_contract(model_path: str) -> dict[str, list[float]]:
     data = Path(model_path).read_bytes()
     model = Table(data, struct.unpack_from("<I", data)[0])
     metadata = None
@@ -74,15 +77,19 @@ def read_contract(model_path):
     raise ValueError("Missing image normalization process unit")
 
 
-def embedded_labels(model_path):
+def embedded_labels(model_path: str | Path) -> list[str]:
     # The checked-in Google AutoML export packages its output labels in dict.txt.
     with zipfile.ZipFile(model_path) as archive:
         return archive.read("dict.txt").decode("utf-8").splitlines()
 
 
-def prepare_image(image, input_details, contract):
+def prepare_image(
+    image: Image.Image, input_details: dict[str, Any], contract: dict[str, list[float]]
+) -> NDArray[Any]:
     _, height, width, _ = input_details["shape"]
-    values = np.asarray(image.convert("RGB").resize((int(width), int(height))), dtype=np.float32)
+    values: NDArray[Any] = np.asarray(
+        image.convert("RGB").resize((int(width), int(height))), dtype=np.float32
+    )
     values = (values - np.asarray(contract["mean"], dtype=np.float32)) / np.asarray(
         contract["std"], dtype=np.float32
     )

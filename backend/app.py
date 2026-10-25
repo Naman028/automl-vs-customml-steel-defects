@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Literal, List
+from typing import Any, Literal, List, NoReturn
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,7 +48,7 @@ app.add_middleware(
 
 
 # Helper function to standardize error handling in prediction endpoints, ensuring consistent HTTP 500 responses for unhandled exceptions while allowing HTTPExceptions to pass through as intended.
-def _raise_unhandled_prediction_error(exc: Exception, log_message: str, detail: str):
+def _raise_unhandled_prediction_error(exc: Exception, log_message: str, detail: str) -> NoReturn:
     """Normalize unhandled exceptions into a stable HTTP 500 response."""
     if isinstance(exc, HTTPException):
         raise exc
@@ -56,13 +56,13 @@ def _raise_unhandled_prediction_error(exc: Exception, log_message: str, detail: 
     raise HTTPException(status_code=500, detail=detail)
 
 
-def _load_normalized_metrics(path: Path, model_path: Path):
+def _load_normalized_metrics(path: Path, model_path: Path) -> dict[str, Any]:
     """Read and normalize metrics file into the shared comparison schema."""
     return normalize_metrics(read_json_file(path), path, model_path, CLASS_NAMES)
 
 
 @app.get("/")
-def root():
+def root() -> dict[str, Any]:
     return {
         "service": "Industrial Defect API",
         "status": "ok",
@@ -72,12 +72,12 @@ def root():
 
 
 @app.get("/health")
-def health():
+def health() -> dict[str, Any]:
     return health_payload()
 
 
 @app.get("/test-model")
-def test_model():
+def test_model() -> dict[str, Any]:
     return test_model_payload()
 
 
@@ -85,7 +85,7 @@ def test_model():
 async def predict(
     file: UploadFile = File(...),
     model_type: Literal["custom", "automl", "both"] = "custom",
-):
+) -> dict[str, Any]:
     try:
         img = await load_validated_image(file)
         return predict_single(img, model_type)
@@ -101,7 +101,7 @@ async def predict(
 async def predict_batch(
     files: List[UploadFile] = File(..., description="List of image files to process"),
     model_type: Literal["custom", "automl", "both"] = "custom",
-):
+) -> dict[str, Any]:
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
     if len(files) > MAX_BATCH_FILES:
@@ -124,14 +124,14 @@ async def predict_batch(
 
 
 @app.post("/assistant")
-async def assistant(req: AssistantRequest):
+async def assistant(req: AssistantRequest) -> dict[str, Any]:
     if not req.question or not req.question.strip():
         raise HTTPException(status_code=400, detail="Question is required")
     return answer_question(req.question, req.prediction)
 
 
 @app.post("/predict/debug")
-async def predict_debug(file: UploadFile = File(...), top_k: int = TOP_K_DEFAULT):
+async def predict_debug(file: UploadFile = File(...), top_k: int = TOP_K_DEFAULT) -> dict[str, Any]:
     try:
         img = await load_validated_image(file)
         return predict_debug_payload(img, top_k)
@@ -142,15 +142,17 @@ async def predict_debug(file: UploadFile = File(...), top_k: int = TOP_K_DEFAULT
 
 
 @app.get("/model/info")
-async def get_model_info():
+async def get_model_info() -> dict[str, Any]:
     try:
         return model_info_payload()
     except Exception as exc:
-        _raise_unhandled_prediction_error(exc, "Failed to read model info", "Model information is unavailable")
+        _raise_unhandled_prediction_error(
+            exc, "Failed to read model info", "Model information is unavailable"
+        )
 
 
 @app.get("/compare/metrics")
-async def compare_metrics():
+async def compare_metrics() -> dict[str, Any]:
     automl_path = BASE_DIR / "models" / "AutoML" / "automl_metrics.json"
     custom_v2_path = BASE_DIR / "models" / "CustomML" / "custom_metrics_v2.json"
     custom_model_path = Path(MODEL_PATH)
@@ -163,7 +165,7 @@ async def compare_metrics():
 
 
 @app.get("/gc10/metrics")
-def gc10_metrics():
+def gc10_metrics() -> dict[str, Any]:
     try:
         return gc10_metrics_payload()
     except (OSError, ValueError) as error:
@@ -172,7 +174,7 @@ def gc10_metrics():
 
 
 @app.post("/gc10/predict")
-async def predict_gc10(file: UploadFile = File(...)):
+async def predict_gc10(file: UploadFile = File(...)) -> dict[str, Any]:
     image = await load_validated_image(file)
     try:
         return gc10_predict(image)
