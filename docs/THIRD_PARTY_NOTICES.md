@@ -30,10 +30,12 @@ NEU and GC10 belong to their original providers; see [sources](../data/SOURCES.m
 Dataset images and generated checkpoints stay outside the source tree. The owner
 has requested a versioned release of the custom NEU checkpoint, GC10 classifier
 head, and owner-trained AutoML export. Release hashes and URLs are recorded in the
-model registry. Publishing remains gated on the owner's release confirmation.
+model registry. The owner approved publication of these three model artifacts in v1.0.0.
 
 The reference photographs have been removed from the current tree because their
 redistribution rights are unclear. Labelled placeholders are used instead.
-Historical copies of those photos, model binaries and old demo credentials are
-scheduled for removal using a fresh mirror clone and `git filter-repo`, subject
-to separate owner approval. Current-tree removal does not itself remove history.
+Historical copies of those photos, the two previously tracked model binaries,
+and the two old demo-password literals were removed from the rewritten main
+history using a fresh mirror and `git filter-repo`, with owner approval. Origin
+had only main and no tags before the rewrite; the release tag uses the cleaned
+history. Verification scans cover all refs reachable from a fresh GitHub clone.
