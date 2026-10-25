@@ -1,51 +1,97 @@
-﻿# Env / secrets
+# Credentials and local environment settings
 .env
 .env.*
 !.env.example
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+*service-account*.json
+*service_account*.json
+.ssh/
 
-# Python
-*.pt
-*.tflite
-*.download
+# Installed dependencies and Python tooling
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+pytest-cache-files*/
 .mypy_cache/
 .ruff_cache/
+.tox/
+.nox/
+
+# Coverage, browser test output and generated builds
 .coverage
+.coverage.*
 coverage.xml
+coverage/
 htmlcov/
 test-results/
 playwright-report/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-pytest-cache-files*/
-.venv/
-venv/
-*.egg-info/
-dist/
-build/
-
-# Node
-node_modules/
+blob-report/
 dist/
 build/
 .vite/
-*.log
+*.tsbuildinfo
 
-# IDE
-.vscode/
-.idea/
+# Model artifacts: only labels and provisioning metadata belong in Git
+/models/**
+!/models/AutoML/
+!/models/AutoML/labels.txt
+!/models/registry.json
+*.pt
+*.pth
+*.ckpt
+*.tflite
+*.onnx
+*.safetensors
+*.h5
+*.hdf5
+*.joblib
+*.pkl
+*.download
 
-# Data
+# Local data and generated evaluation evidence
+/data/raw/
+/data/interim/
+/data/processed/
+/data/cache/
+/reports/runs/
+/reports/verification/publication_inventory.json
+# Older dataset layouts remain excluded if downloaded again.
 **/neu_final_dataset/
 **/neu_final_dataset_fullnames/
 backend/assistant/neu_defect_assistant_dataset/
-**/*.zip
-
-# Reproducible local reports and temporary test output
-backend/models/evaluation_reports/
 backend/models/archive/
-backend/models/GC10/outputs_local*/
-backend/models/CustomML/outputs_refined/
-backend/models/CustomML/outputs*/
-backend/models/CustomML/outputs/best_overfit_backup.pt
+backend/models/evaluation_reports/
 testsprite_tests/
+
+# Internal notes, local agent/editor settings and operating-system files
+/docs/local/
+.agents/
+.codex/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Downloaded archives and review bundles
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
