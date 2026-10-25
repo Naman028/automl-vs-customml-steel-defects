@@ -6,6 +6,7 @@ const frontendRequire = createRequire(resolve(__dirname, "../../frontend/package
 const { test, expect } = frontendRequire("@playwright/test") as typeof import("@playwright/test");
 
 test("home page loads", async ({ page }) => {
+  await page.route("**/metals/**", (route) => route.abort());
   await page.route("**/gc10/metrics", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -18,6 +19,7 @@ test("home page loads", async ({ page }) => {
 
   // Basic sanity check: page has visible body
   await expect(page.locator("body")).toBeVisible();
+  await expect(page.getByText("Reference image not bundled").first()).toBeVisible();
 
   // Ensure no error text is visible
   await expect(page.locator("text=Error")).toHaveCount(0);

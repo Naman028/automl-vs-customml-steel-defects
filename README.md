@@ -116,6 +116,9 @@ provenance review. Existing approved local weights can be verified in place or
 restored using `--source-dir` with a local bundle that preserves manifest paths.
 A fresh clone cannot run model predictions until those weights are provisioned.
 Informational routes and fixture tests do not require them.
+Source-only publication bundles omit demonstration photographs whose permissions
+are unverified. Reference cards show labelled placeholders when those images are
+not bundled; inference uses images supplied by the user.
 
 The frontend uses `VITE_API_BASE_URL`; the backend uses the typed configuration
 in [`backend/config.py`](backend/config.py). Copy [`.env.example`](.env.example) to

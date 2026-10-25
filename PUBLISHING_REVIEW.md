@@ -68,3 +68,14 @@ Before publication, decide whether to retain the original history after verifyin
 asset rights or authorize a separate source-only publication history/copy that
 excludes historical binaries and uncleared photographs. No such history change
 or publication will be inferred from approval of this local cleanup.
+
+## Source-only review package
+
+A source-only ZIP and a SHA-256 inventory are prepared locally for review; see
+[`artifacts/publication_inventory.json`](artifacts/publication_inventory.json).
+The package omits dataset/model binaries, original Git history and demonstration
+photographs with unverified redistribution permissions. Reference cards use
+explicit placeholders when those photographs are not bundled, verified by the
+Playwright smoke test with photo requests blocked. Original local files and
+history remain intact. Creating/pushing a private repository from this package
+still requires owner approval; no public visibility or model release is implied.

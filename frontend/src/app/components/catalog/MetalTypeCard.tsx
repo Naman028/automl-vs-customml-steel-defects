@@ -1,5 +1,6 @@
 import React from "react";
 import { MetalType } from "../../services/api";
+import { ReferenceImage } from "./ReferenceImage";
 
 type MetalTypeCardProps = {
   metal: MetalType;
@@ -20,7 +21,7 @@ export const MetalTypeCard: React.FC<MetalTypeCardProps> = ({
     >
       <div className="relative h-full bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/10 dark:hover:shadow-slate-950/50 hover:-translate-y-2">
         <div className="relative h-56 overflow-hidden bg-slate-100 dark:bg-slate-950">
-          <img
+          <ReferenceImage
             src={metal.imageUrl}
             alt={metal.displayName}
             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
@@ -32,7 +33,7 @@ export const MetalTypeCard: React.FC<MetalTypeCardProps> = ({
               className={`px-3 py-1.5 rounded-lg bg-gradient-to-r ${metal.color} backdrop-blur-md border border-white/20 shadow-lg`}
             >
               <span className="text-white text-xs tracking-wider">
-                CERTIFIED
+                REFERENCE
               </span>
             </div>
           </div>

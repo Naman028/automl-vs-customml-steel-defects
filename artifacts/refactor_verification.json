@@ -18,5 +18,6 @@
     "maximum_probability_delta": 3.8746109315423993e-07,
     "probability_tolerance": 1e-05,
     "test_metrics_identical": true
-  }
+  },
+  "runtime_api_sample_matches_pre_refactor": true
 }
