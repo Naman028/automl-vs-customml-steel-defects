@@ -26,6 +26,7 @@ jobs:
       - run: ruff check backend ml tests scripts
       - run: ruff format --check backend ml tests scripts
       - run: mypy
+      - run: python scripts/update_readme_results.py --check
       - run: python scripts/scan_secrets.py
       - run: pytest -m "not requires_weights and not requires_datasets and not live_api" --cov --cov-report=xml
       - uses: actions/upload-artifact@v4

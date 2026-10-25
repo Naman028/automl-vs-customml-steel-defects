@@ -43,3 +43,7 @@ The container definition has not been built here because Docker is unavailable.
 Lint, type, API fixture and browser checks validate the source reorganization;
 container build, artifact permissions, real deployment smoke tests and the outstanding
 correctness audit findings must be checked before production sign-off.
+
+There is no server-side authentication. The optional frontend demo sign-in does
+not authorize API requests; deploy appropriate access controls before exposing
+the API beyond a trusted environment.

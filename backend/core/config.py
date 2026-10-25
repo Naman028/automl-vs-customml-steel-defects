@@ -48,7 +48,7 @@ class Settings:
                 "AUTOML_TFLITE_PATH", models / "AutoML/AutoML model.tflite"
             ),
             automl_labels=environment_path("AUTOML_LABELS_PATH", models / "AutoML/labels.txt"),
-            gc10_output=environment_path("GC10_OUTPUT_DIR", models / "GC10/outputs_local_v1"),
+            gc10_output=environment_path("GC10_OUTPUT_DIR", models / "GC10/releases/v1.0.0"),
             max_upload_bytes=upload_limit,
             enable_vertex=os.getenv("ENABLE_VERTEX_AI", "false").lower() == "true",
             project_id=os.getenv("GCP_PROJECT_ID", ""),

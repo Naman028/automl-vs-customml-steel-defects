@@ -6,7 +6,6 @@ const frontendRequire = createRequire(resolve(__dirname, "../../frontend/package
 const { test, expect } = frontendRequire("@playwright/test") as typeof import("@playwright/test");
 
 test("home page loads", async ({ page }) => {
-  await page.route("**/metals/**", (route) => route.abort());
   await page.route("**/gc10/metrics", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",

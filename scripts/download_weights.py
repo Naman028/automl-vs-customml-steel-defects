@@ -39,7 +39,10 @@ def main() -> None:
         if pending.exists():
             raise FileExistsError(f"Review existing partial artifact: {pending}")
         if arguments.source_dir:
-            shutil.copyfile(arguments.source_dir / artifact["path"], pending)
+            source = arguments.source_dir / artifact["path"]
+            if not source.is_file() and artifact.get("asset_name"):
+                source = arguments.source_dir / artifact["asset_name"]
+            shutil.copyfile(source, pending)
         elif artifact["url"]:
             if not artifact["url"].startswith("https://"):
                 raise ValueError("Artifact download requires HTTPS")

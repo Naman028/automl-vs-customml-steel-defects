@@ -95,3 +95,7 @@ Desktop.ini
 *.tar
 *.tar.gz
 *.tgz
+
+# Unlicensed reference photographs must not be reintroduced.
+/frontend/public/metals/
+/frontend/public/defects/

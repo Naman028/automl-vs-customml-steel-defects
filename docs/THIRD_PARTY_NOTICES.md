@@ -1,7 +1,9 @@
 # Attribution and publication permissions
 
 This document records provenance; it does not grant rights to third-party material.
-The owner has not yet selected a licence for original project code.
+Original project code is licensed under [MIT](../LICENSE), copyright Naman Patel.
+Datasets, pretrained components, and third-party libraries keep their own licences;
+the project MIT licence does not relicense those components.
 
 ## Architecture and software
 
@@ -14,9 +16,10 @@ The owner has not yet selected a licence for original project code.
   artifacts must be reviewed separately from the library licence.
 - React, Vite, Radix UI, Tailwind and other frontend dependencies retain their own
   package licences and notices. Their versions are recorded in the npm lockfile.
-- The AutoML TFLite model is an existing Google AutoML/course export. The original
-  cloud job, training membership and permission to redistribute the export remain
-  unverified. Optional Vertex API support is retained but does not imply cloud access.
+- Naman Patel trained the AutoML Vision model on Google Cloud (Vertex AI AutoML)
+  for a course project, as confirmed by the owner. Optional Vertex API support
+  remains available; local TFLite is the default. The original cloud-job metadata
+  is unavailable, so this provenance statement does not establish training membership.
 - The GC10 head was trained locally using the existing NEU-trained backbone as a
   frozen feature extractor. It is not presented as an independently authored
   backbone architecture or end-to-end GC10 training.
@@ -24,13 +27,13 @@ The owner has not yet selected a licence for original project code.
 ## Data and assets
 
 NEU and GC10 belong to their original providers; see [sources](../data/SOURCES.md).
-Dataset images and generated checkpoints are ignored. Publication of release
-weights is pending owner approval and verified redistribution provenance; the
-registry deliberately contains no invented release URLs.
+Dataset images and generated checkpoints stay outside the source tree. The owner
+has requested a versioned release of the custom NEU checkpoint, GC10 classifier
+head, and owner-trained AutoML export. Release hashes and URLs are recorded in the
+model registry. Publishing remains gated on the owner's release confirmation.
 
-Model binaries were untracked without deleting their local copies. Historical
-model files and existing tracked frontend demonstration photographs predate this
-cleanup. Their redistribution rights have not been established here. The weights
-have not been removed from disk or Git history, and no history rewrite was made.
-Before any public release, the owner must approve how to handle those existing
-tracked artifacts and confirm or replace the demonstration assets' licences.
+The reference photographs have been removed from the current tree because their
+redistribution rights are unclear. Labelled placeholders are used instead.
+Historical copies of those photos, model binaries and old demo credentials are
+scheduled for removal using a fresh mirror clone and `git filter-repo`, subject
+to separate owner approval. Current-tree removal does not itself remove history.

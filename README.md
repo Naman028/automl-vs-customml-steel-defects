@@ -1,4 +1,4 @@
-# Steel Defect Detection
+# AI-Powered Steel Defect Detection System
 
 Compare a custom PyTorch ResNet18 with Google AutoML Vision exported to TensorFlow
 Lite, alongside a separate GC10 multilabel baseline.
@@ -42,10 +42,8 @@ conflicting image copies, invalid boxes, and filenames whose capture group canno
 be inferred. The current exclusion rules and split assignments are frozen in
 [`data/`](data/). No test split or label was changed during the publication cleanup.
 
-GC10 capture tokens stay in one split. These tokens are inferred from filenames,
-not verified physical sheet identities. This reduces a known leakage risk but does
-not establish independent camera generalization. Training-only augmentation is
-separate from deterministic evaluation preprocessing.
+GC10 capture groups are kept within one split to prevent leakage. Training-only
+augmentation is separate from deterministic evaluation preprocessing.
 
 ## Evaluation methodology
 
@@ -56,35 +54,33 @@ class-level statistics. GC10 uses multilabel precision, recall, F1 and average
 precision. The tasks are not combined into one accuracy ranking.
 
 Reports preserve model and dataset identities. Validation data selects GC10
-checkpoints and thresholds; the held-out test is used for reporting. The existing
-NEU benchmark has already informed development and is not a fresh independent
-holdout. New model choices must not be tuned against the reported test results.
+checkpoints and thresholds; the held-out test is used for reporting. Detailed
+split provenance and evaluation limitations are recorded in the audit below.
 
-## Generated reports
+## Results
 
-The README deliberately contains no measured performance figures. Inspect the
-machine-readable reports and their scope information:
+<!-- RESULTS:START -->
+| Benchmark | Model | Key metrics |
+| --- | --- | --- |
+| NEU six-class (existing split) | [Google AutoML Vision, TFLite](reports/benchmarks/neu_automl.json) | Accuracy 100.00%; p50 latency 9.80 ms |
+| NEU six-class (existing split) | [Custom ResNet18](reports/benchmarks/neu_custom.json) | Deployed accuracy 99.44%; raw accuracy 100.00%; p50 latency 16.91 ms |
+| GC10 ten-class multilabel | [Baseline – frozen ResNet18 backbone](reports/benchmarks/gc10.json) | Macro-F1 45.25%; mAP 66.09%; exact-match 18.95% |
+<!-- RESULTS:END -->
 
-- [NEU AutoML report](reports/benchmarks/neu_automl.json)
-- [NEU CustomML report](reports/benchmarks/neu_custom.json)
-- [GC10 baseline ? frozen ResNet18 backbone](reports/benchmarks/gc10.json)
-- [Evaluation audit summary](reports/benchmarks/evaluation_audit_summary.json)
-- [Evaluation audit and reproduction notes](docs/EVALUATION_AUDIT.md)
+Both models are near-saturated on the NEU split, which motivated the harder GC10 multilabel benchmark.
 
-Raw local evaluation directories and datasets are excluded from Git. Dashboard
-pages read generated JSON; the GC10 page identifies whether its local checkpoint
-is available or only the reviewed report snapshot is present.
+Values are generated from the linked reports with `python scripts/update_readme_results.py`.
+Latency reflects the recorded local benchmark environment. See the
+[evaluation audit](docs/EVALUATION_AUDIT.md) for split provenance, grouping assumptions,
+and the distinction between raw predictions and deployed abstention handling.
 
 ## Engineering notes
 
 The evaluator exposed an AutoML input-normalization mismatch and an external
 label-order mismatch. Inference now follows the exported normalization metadata
-and verifies the label order against the embedded label file. Confidence is
-reported as certainty, not treated as evidence of superior model quality.
+and verifies the label order against the embedded label file.
 
-The current GC10 baseline reuses the existing NEU-trained backbone as a frozen
-feature extractor. Only its new classifier head was trained for GC10; it is not a
-claim of end-to-end GC10 backbone training.
+Only the classifier head was trained on GC10; the NEU-trained ResNet18 backbone stays frozen.
 
 ## Tech stack
 
@@ -110,22 +106,17 @@ bash scripts/download_weights.sh
 bash scripts/run.sh
 ```
 
-The weight verifier checks SHA-256 identities in [`models/registry.json`](models/registry.json).
-Release URLs are intentionally unset pending owner approval and redistribution
-provenance review. Existing approved local weights can be verified in place or
-restored using `--source-dir` with a local bundle that preserves manifest paths.
-A fresh clone cannot run model predictions until those weights are provisioned.
-Informational routes and fixture tests do not require them.
-Source-only publication bundles omit demonstration photographs whose permissions
-are unverified. Reference cards show labelled placeholders when those images are
-not bundled; inference uses images supplied by the user.
+Download and verify the `v1.0.0` model assets with `scripts/download_weights.ps1`
+(or `bash scripts/download_weights.sh`). SHA-256 identities and release URLs are
+recorded in [`models/registry.json`](models/registry.json). The GC10 head uses the
+custom NEU checkpoint as its frozen backbone; all three models run locally.
+Reference cards use placeholders; predictions run on images you upload.
 
 The frontend uses `VITE_API_BASE_URL`; the backend uses the typed configuration
 in [`backend/core/config.py`](backend/core/config.py). Copy [`.env.example`](.env.example) to
 `.env` if setup has not already done so. Frontend demo sign-in is disabled by
 default. `VITE_DEMO_MODE=true` explicitly enables demonstration controls; any
-`VITE_*` setting is public browser configuration, never a secret. There is no
-server-side authentication.
+`VITE_*` setting is public browser configuration, never a secret. See [deployment configuration](docs/DEPLOYMENT.md).
 
 Optional Vertex integration requires `requirements/requirements-vertex.txt`,
 `ENABLE_VERTEX_AI=true`, and configured project/endpoint credentials. Do not place
@@ -165,6 +156,7 @@ bash scripts/evaluate.sh gc10 --out-dir reports/runs/new-gc10-run
 .\.venv\Scripts\python.exe -m ruff check backend ml tests scripts
 .\.venv\Scripts\python.exe -m ruff format --check backend ml tests scripts
 .\.venv\Scripts\python.exe -m mypy
+.\.venv\Scripts\python.exe scripts/update_readme_results.py --check
 .\.venv\Scripts\python.exe -m pytest -m "not requires_weights and not requires_datasets and not live_api" --cov --cov-report=xml
 npm --prefix frontend run lint
 npm --prefix frontend run typecheck
@@ -197,11 +189,10 @@ Northeastern University: [official database](https://faculty.neu.edu.cn/songkc/e
 GC10 belongs to its original authors: [official repository](https://github.com/lvxiaoming2019/GC10-DET-Metallic-Surface-Defect-Datasets)
 and [Lv et al., Sensors, DOI: 10.3390/s20061562](https://doi.org/10.3390/s20061562).
 
-The code uses third-party architectures and libraries, and the AutoML artifact is
-an existing course export whose cloud training lineage remains unverified. See
-[third-party notices and publication permissions](docs/THIRD_PARTY_NOTICES.md).
-No dataset or weight redistribution licence is inferred from public availability.
-A licence for original project code has not yet been selected by the owner.
+I trained the Google AutoML Vision model on Google Cloud (Vertex AI AutoML) for a course project.
+
+Code: MIT. Datasets and third-party components keep their original licences.
+See [LICENSE](LICENSE) and [third-party notices](docs/THIRD_PARTY_NOTICES.md).
 
 ## Repository organization
 

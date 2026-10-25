@@ -124,3 +124,21 @@ The portable, machine-readable findings are in
 Per-image local reports are ignored by Git because they include dataset paths.
 Datasets and checkpoints must retain their appropriate licenses and provenance
 when distributed. This audit does not publish or push anything to GitHub.
+
+## Publication wording and provenance
+
+The owner confirms that they trained the Google AutoML Vision model on Google
+Cloud (Vertex AI AutoML) for the course project. Original cloud-job metadata is
+not available, so this confirmation does not independently verify cloud training
+membership or the model's train/validation/test split.
+
+GC10 capture tokens are inferred from filenames, not verified physical sheet
+identities. Keeping tokens within one split reduces this leakage risk but does
+not establish independent camera generalization. The README summarizes this as
+capture-group separation; the underlying limitations remain unchanged here.
+
+The NEU split has informed development and is not a new independent holdout.
+Near-saturated results on this split should not be presented as evidence of
+independent field generalization. GC10 is a harder, separate multilabel task.
+The README Results table is generated exclusively from the existing benchmark
+JSON files. Release preparation must preserve those files and the frozen manifests.

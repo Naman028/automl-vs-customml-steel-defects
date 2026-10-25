@@ -1,6 +1,7 @@
 """Read GC10 experiment results and run the separately trained local model."""
 
 import json
+import hashlib
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, cast
@@ -9,9 +10,9 @@ from PIL import Image
 import torch
 
 from backend.inference.gc10_model import create_backbone, image_transform
-from backend.core.config import environment_path, MODELS_ROOT, REPORTS_ROOT
+from backend.core.config import environment_path, MODELS_ROOT, REPORTS_ROOT, SETTINGS
 
-DEFAULT_OUTPUT_DIR = MODELS_ROOT / "GC10/outputs_local_v1"
+DEFAULT_OUTPUT_DIR = MODELS_ROOT / "GC10/releases/v1.0.0"
 
 
 def output_directory() -> Path:
@@ -33,7 +34,22 @@ def metrics_payload() -> dict[str, Any]:
 def load_model(model_path: str) -> tuple[torch.nn.Module, torch.nn.Linear, dict[str, Any]]:
     checkpoint = cast(dict[str, Any], torch.load(model_path, map_location="cpu", weights_only=True))
     backbone, feature_count = create_backbone()
-    backbone.load_state_dict(checkpoint["backbone"], strict=True)
+    if "backbone" in checkpoint:
+        backbone_weights = checkpoint["backbone"]
+    else:
+        if checkpoint.get("format") != "gc10-head-v1":
+            raise ValueError("Unsupported GC10 checkpoint format")
+        with SETTINGS.custom_model.open("rb") as source:
+            identity = hashlib.file_digest(source, "sha256").hexdigest()
+        if identity != checkpoint["backbone_sha256"]:
+            raise ValueError("GC10 head requires the matching NEU backbone checkpoint")
+        neu_checkpoint = torch.load(SETTINGS.custom_model, map_location="cpu", weights_only=True)
+        backbone_weights = {
+            name: value
+            for name, value in neu_checkpoint["model_state_dict"].items()
+            if not name.startswith("fc.")
+        }
+    backbone.load_state_dict(backbone_weights, strict=True)
     head = torch.nn.Linear(feature_count, len(checkpoint["classes"]))
     head.load_state_dict(checkpoint["head"], strict=True)
     return backbone.eval(), head.eval(), checkpoint

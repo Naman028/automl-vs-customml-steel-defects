@@ -4,22 +4,25 @@
       "name": "neu-custom",
       "path": "models/CustomML/outputs/best.pt",
       "sha256": "bfb552b46efb287654623ff59994a04cad37d7d619115a6772b07101bd1b9a92",
-      "url": null,
-      "publication_status": "pending owner approval and redistribution provenance verification"
+      "url": "https://github.com/Naman028/automl-vs-customml-steel-defects/releases/download/v1.0.0/neu-resnet18.pt",
+      "publication_status": "prepared for v1.0.0; awaiting owner release confirmation",
+      "asset_name": "neu-resnet18.pt"
     },
     {
       "name": "neu-automl",
       "path": "models/AutoML/AutoML model.tflite",
       "sha256": "b8989ac30eff1ceec4c8b4a588b2263e7170029e458e7ee6980d8f4fe2b02292",
-      "url": null,
-      "publication_status": "pending owner approval and redistribution provenance verification"
+      "url": "https://github.com/Naman028/automl-vs-customml-steel-defects/releases/download/v1.0.0/automl-vision.tflite",
+      "publication_status": "prepared for v1.0.0; awaiting owner release confirmation",
+      "asset_name": "automl-vision.tflite"
     },
     {
       "name": "gc10",
-      "path": "models/GC10/outputs_local_v1/model.pt",
-      "sha256": "273282b54ff4ab0dcf25e7bfff869b7867af272bce7ec1defb95ed30802dd44a",
-      "url": null,
-      "publication_status": "pending owner approval and redistribution provenance verification"
+      "path": "models/GC10/releases/v1.0.0/model.pt",
+      "sha256": "267d1a3f16b533d933dc7ca298feb6f8f979246ea0c697cea09011268f81ee9a",
+      "url": "https://github.com/Naman028/automl-vs-customml-steel-defects/releases/download/v1.0.0/gc10-head.pt",
+      "publication_status": "prepared for v1.0.0; awaiting owner release confirmation",
+      "asset_name": "gc10-head.pt"
     }
   ]
 }
