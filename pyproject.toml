@@ -1,0 +1,35 @@
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+extend-exclude = [".venv", "backend/models/archive", "backend/models/neu_final_dataset_fullnames", "backend/models/evaluation_reports"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E402"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+follow_imports = "silent"
+ignore_missing_imports = true
+files = ["backend/config.py", "backend/prediction_routing.py", "backend/uploads.py", "backend/image_preprocessing.py", "backend/vertex_ai_integration.py", "backend/models/evaluation_metrics.py", "backend/gc10_model.py", "backend/gc10_runtime.py", "backend/models/evaluate_gc10.py", "scripts/download_weights.py", "scripts/prepare_data.py", "scripts/scan_secrets.py"]
+explicit_package_bases = true
+mypy_path = ["backend", "backend/models"]
+
+[[tool.mypy.overrides]]
+module = ["torchvision.*"]
+follow_imports = "skip"
+
+[tool.pytest.ini_options]
+addopts = "-p no:cacheprovider"
+testpaths = ["tests", "backend/models"]
+pythonpath = ["backend", "backend/models"]
+markers = [
+  "requires_weights: needs locally provisioned model checkpoints or TFLite exports",
+  "requires_datasets: needs locally provisioned NEU or GC10 data",
+  "live_api: needs an explicitly started local backend",
+]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = ["backend/models/archive/*", "backend/models/evaluation_reports/*", "backend/models/neu_final_dataset_fullnames/*"]

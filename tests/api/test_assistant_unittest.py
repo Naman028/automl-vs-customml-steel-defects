@@ -75,7 +75,9 @@ class AssistantBehaviorTests(unittest.TestCase):
         self.assertIn("not aluminum defects", self.ask("Can this detect aluminum defects?"))
 
     def test_human_inspector_limit(self):
-        self.assertIn("must not replace qualified inspection", self.ask("Can it replace a human inspector?"))
+        self.assertIn(
+            "must not replace qualified inspection", self.ask("Can it replace a human inspector?")
+        )
 
     def test_general_question_ignores_camera_prediction(self):
         answer = self.ask("What are the six steel defects?", PREDICTION)

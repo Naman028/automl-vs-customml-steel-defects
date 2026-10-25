@@ -14,14 +14,17 @@ def is_server_up(url):
         return False
 
 
-@pytest.mark.skipif(not is_server_up(BASE), reason=f"Backend server is not running on {BASE}")
+@pytest.mark.live_api
+@pytest.mark.requires_weights
 def test_predict_single_file():
-    sample = Path(__file__).resolve().parents[2] / 'frontend' / 'public' / 'defects' / 'crazing.jpg'
+    if os.getenv("RUN_LIVE_API_TESTS") != "true" or not is_server_up(BASE):
+        pytest.skip("Set RUN_LIVE_API_TESTS=true with a local backend running")
+    sample = Path(__file__).resolve().parents[2] / "frontend" / "public" / "defects" / "crazing.jpg"
     if not sample.exists():
         pytest.skip(f"Sample image not found: {sample}")
 
-    with sample.open('rb') as f:
-        files = {'file': ('crazing.jpg', f, 'image/jpeg')}
+    with sample.open("rb") as f:
+        files = {"file": ("crazing.jpg", f, "image/jpeg")}
         r = requests.post(f"{BASE}/predict", files=files, timeout=15)
 
     assert r.status_code == 200
@@ -30,7 +33,18 @@ def test_predict_single_file():
     assert isinstance(payload, dict), "Response JSON should be an object"
 
     # Accept common prediction response shapes (top-level or nested)
-    expected_top = {"prediction", "predictions", "label", "results", "class", "classes", "score", "scores", "confidence", "probabilities"}
+    expected_top = {
+        "prediction",
+        "predictions",
+        "label",
+        "results",
+        "class",
+        "classes",
+        "score",
+        "scores",
+        "confidence",
+        "probabilities",
+    }
     if expected_top.intersection(payload.keys()):
         assert True
     else:
