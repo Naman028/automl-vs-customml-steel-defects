@@ -40,7 +40,7 @@ if ($InTerminal) {
 }
 else {
     # Default behavior: start backend in separate PowerShell window.
-    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $backendCmd) | Out-Null
+    Start-Process powershell -WindowStyle Hidden -ArgumentList @("-NoExit", "-Command", $backendCmd) | Out-Null
 }
 
 # Start frontend in current terminal.

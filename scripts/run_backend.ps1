@@ -65,21 +65,12 @@ if ($AutoMLModelPath) {
 
     $env:AUTOML_TFLITE_PATH = $resolved.Path
     Write-Host "Using AutoML model: $($env:AUTOML_TFLITE_PATH)" -ForegroundColor Cyan
-} elseif (-not $env:AUTOML_TFLITE_PATH) {
-    $defaultAutoMLPath = Join-Path $backendPath "models\AutoML\AutoML model.tflite"
-    if (-not (Test-Path $defaultAutoMLPath)) {
-        throw "Default AutoML model not found: $defaultAutoMLPath"
-    }
-    $env:AUTOML_TFLITE_PATH = (Resolve-Path $defaultAutoMLPath).Path
-    Write-Host "Using default AutoML model: $($env:AUTOML_TFLITE_PATH)" -ForegroundColor Cyan
 }
 
 if ($AssistantMode) {
     $env:ASSISTANT_MODE = $AssistantMode
-} elseif (-not $env:ASSISTANT_MODE) {
-    $datasetIndexPath = Join-Path $backendPath "assistant\assistant_dataset_index.json"
-    $env:ASSISTANT_MODE = if (Test-Path $datasetIndexPath) { "dataset" } else { "local" }
 }
+
 Write-Host "Assistant mode: $($env:ASSISTANT_MODE)" -ForegroundColor Cyan
 
 if ($env:ASSISTANT_MODE -eq "dataset") {
@@ -89,4 +80,9 @@ if ($env:ASSISTANT_MODE -eq "dataset") {
     }
 }
 
-python -m uvicorn app:app --reload --port $Port
+$envFile = Join-Path $repoRoot '.env'
+if (Test-Path $envFile) {
+    python -m uvicorn app:app --env-file $envFile --reload --port $Port
+} else {
+    python -m uvicorn app:app --reload --port $Port
+}

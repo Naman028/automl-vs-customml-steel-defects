@@ -1,7 +1,2 @@
-torch>=2.0
-torchvision>=0.15
-tqdm>=4.0
-scikit-learn>=1.2
-Pillow>=9.0
-google-cloud-storage>=2.10
-matplotlib>=3.8
+-r ../../requirements-metrics.txt
+matplotlib==3.10.8

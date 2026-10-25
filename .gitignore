@@ -4,9 +4,20 @@
 !.env.example
 
 # Python
+*.pt
+*.tflite
+*.download
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+test-results/
+playwright-report/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+pytest-cache-files*/
 .venv/
 venv/
 *.egg-info/
@@ -31,6 +42,10 @@ backend/assistant/neu_defect_assistant_dataset/
 **/*.zip
 
 # Reproducible local reports and temporary test output
+backend/models/evaluation_reports/
+backend/models/archive/
+backend/models/GC10/outputs_local*/
 backend/models/CustomML/outputs_refined/
+backend/models/CustomML/outputs*/
 backend/models/CustomML/outputs/best_overfit_backup.pt
 testsprite_tests/

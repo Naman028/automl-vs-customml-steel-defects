@@ -1,0 +1,22 @@
+{
+  "neu": {
+    "custom": {
+      "raw_labels_identical": true,
+      "deployed_labels_identical": true,
+      "confidences_identical": true,
+      "classification_metrics_identical": true
+    },
+    "automl": {
+      "raw_labels_identical": true,
+      "deployed_labels_identical": true,
+      "confidences_identical": true,
+      "classification_metrics_identical": true
+    }
+  },
+  "gc10": {
+    "labels_identical": true,
+    "maximum_probability_delta": 3.8746109315423993e-07,
+    "probability_tolerance": 1e-05,
+    "test_metrics_identical": true
+  }
+}

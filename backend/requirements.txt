@@ -1,11 +1,10 @@
-torch
-torchvision
+torch==2.9.1
+torchvision==0.24.1
 fastapi==0.115.6
-uvicorn[standard]==0.34.0
+uvicorn==0.34.0
 python-multipart==0.0.20
 pillow==10.4.0
-numpy>=2.1.0
+numpy==2.4.1
+flatbuffers==25.12.19
 tqdm==4.66.4
-# Vertex AI dependencies (optional, for GCP deployment)
-google-cloud-aiplatform>=1.38.0
-google-auth>=2.23.0
+python-dotenv==1.2.1
