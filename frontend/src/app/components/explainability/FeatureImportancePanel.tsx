@@ -1,5 +1,5 @@
-import React from 'react';
-import { Brain } from 'lucide-react';
+import React from "react";
+import { Brain } from "lucide-react";
 
 export type FeatureImportance = {
   feature: string;
@@ -37,7 +37,7 @@ export const FeatureImportancePanel: React.FC<FeatureImportancePanelProps> = ({
       <div className="p-6 space-y-4">
         {features.length === 0 && (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            No feature importance data available for this model export.
+            No performance indicators available for this model export.
           </p>
         )}
         {features.map((feature, index) => (
@@ -47,8 +47,12 @@ export const FeatureImportancePanel: React.FC<FeatureImportancePanelProps> = ({
             style={{ animation: `fadeInUp 0.4s ease-out ${index * 0.1}s both` }}
           >
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-700 dark:text-slate-300">{feature.feature}</span>
-              <span className={`text-sm ${accentClass}`}>{feature.importance}%</span>
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                {feature.feature}
+              </span>
+              <span className={`text-sm ${accentClass}`}>
+                {feature.importance}%
+              </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
               <div
@@ -59,7 +63,9 @@ export const FeatureImportancePanel: React.FC<FeatureImportancePanelProps> = ({
                 }}
               ></div>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{feature.description}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {feature.description}
+            </p>
           </div>
         ))}
       </div>

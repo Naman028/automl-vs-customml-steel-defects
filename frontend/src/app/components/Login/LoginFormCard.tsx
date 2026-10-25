@@ -168,7 +168,7 @@ export const LoginFormCard: React.FC<LoginFormCardProps> = ({
       </Card>
 
       <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-        Demo credentials: employee/REMOVED_DEMO_CREDENTIAL or admin/REMOVED_DEMO_CREDENTIAL
+        Demonstration sign-in only. This does not provide server authentication.
       </p>
     </div>
   );

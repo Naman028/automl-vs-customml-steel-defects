@@ -11,10 +11,13 @@ import {
   User,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { DEMO_MODE } from "../../contexts/authConfig";
+
+export type AppPage = "dashboard" | "comparison" | "gc10";
 
 interface NavbarProps {
-  currentPage: "dashboard" | "comparison";
-  onNavigate: (page: "dashboard" | "comparison") => void;
+  currentPage: AppPage;
+  onNavigate: (page: AppPage) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
@@ -35,7 +38,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                 Metal Defect AI
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {user?.role === "admin" ? (
+                {!DEMO_MODE ? (
+                  "Local workspace"
+                ) : user?.role === "admin" ? (
                   <span className="flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3" />
                     Admin Access
@@ -79,6 +84,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
               Comparison
             </Button>
 
+            <Button
+              variant={currentPage === "gc10" ? "default" : "ghost"}
+              onClick={() => onNavigate("gc10")}
+            >
+              GC10 experiment
+            </Button>
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -93,19 +105,21 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
             </button>
 
             {/* User Info & Logout */}
-            <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-slate-200 dark:border-slate-700">
-              <span className="text-sm text-slate-700 dark:text-slate-300 hidden sm:inline">
-                {user?.username}
-              </span>
-              <Button
-                variant="ghost"
-                onClick={logout}
-                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+            {DEMO_MODE && (
+              <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-slate-200 dark:border-slate-700">
+                <span className="text-sm text-slate-700 dark:text-slate-300 hidden sm:inline">
+                  {user?.username}
+                </span>
+                <Button
+                  variant="ghost"
+                  onClick={logout}
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

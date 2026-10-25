@@ -14,9 +14,9 @@ type ModelPerformanceDashboardProps = {
 const toPercent = (value: number | null | undefined): number =>
   typeof value === "number" ? Math.round(value * 1000) / 10 : 0;
 
-export const ModelPerformanceDashboard: React.FC<ModelPerformanceDashboardProps> = ({
-  comparison,
-}) => {
+export const ModelPerformanceDashboard: React.FC<
+  ModelPerformanceDashboardProps
+> = ({ comparison }) => {
   const automlMetrics: ModelPerformanceMetrics = {
     accuracy: toPercent(comparison.automl.core.accuracy),
     precision: toPercent(comparison.automl.core.precision),

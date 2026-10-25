@@ -1,5 +1,5 @@
-import React from 'react';
-import { Scan } from 'lucide-react';
+import React from "react";
+import { Scan } from "lucide-react";
 
 export const SingleFrameHeader: React.FC = () => {
   return (

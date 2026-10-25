@@ -1,14 +1,17 @@
-import React from 'react';
-import { BatchResult } from './BatchScannerTypes';
-import { BatchResultModelPanel } from './BatchResultModelPanel';
-import { BatchResultWinner } from './BatchResultWinner';
+import React from "react";
+import { BatchResult } from "./BatchScannerTypes";
+import { BatchResultModelPanel } from "./BatchResultModelPanel";
+import { BatchResultWinner } from "./BatchResultWinner";
 
 type BatchResultCardProps = {
   result: BatchResult;
   index: number;
 };
 
-export const BatchResultCard: React.FC<BatchResultCardProps> = ({ result, index }) => {
+export const BatchResultCard: React.FC<BatchResultCardProps> = ({
+  result,
+  index,
+}) => {
   return (
     <div
       className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border-2 border-slate-200 dark:border-slate-700"

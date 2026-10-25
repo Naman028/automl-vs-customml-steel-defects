@@ -21,7 +21,7 @@ const buildThresholdSeries = (
   thresholds: number[] = [],
   precision: number[] = [],
   recall: number[] = [],
-  coverage: number[] = []
+  coverage: number[] = [],
 ) =>
   thresholds.map((t, i) => ({
     threshold: Number(t.toFixed(2)),
@@ -31,7 +31,10 @@ const buildThresholdSeries = (
   }));
 
 const buildAvgPrSeries = (
-  prCurves: Record<string, { precision: number[]; recall: number[]; thresholds: number[] }> = {}
+  prCurves: Record<
+    string,
+    { precision: number[]; recall: number[]; thresholds: number[] }
+  > = {},
 ) => {
   const buckets = new Map<number, { sum: number; count: number }>();
   Object.values(prCurves).forEach((curve) => {
@@ -41,15 +44,18 @@ const buildAvgPrSeries = (
       const precisionPct = Math.max(0, Math.min(100, curve.precision[i] * 100));
       const recallBucket = Math.round(recallPct);
       const prev = buckets.get(recallBucket) ?? { sum: 0, count: 0 };
-      buckets.set(recallBucket, { sum: prev.sum + precisionPct, count: prev.count + 1 });
+      buckets.set(recallBucket, {
+        sum: prev.sum + precisionPct,
+        count: prev.count + 1,
+      });
     }
   });
-  const rows: Array<{ recall: number; precision: number }> = Array.from(buckets.entries()).map(
-    ([recall, agg]) => ({
-      recall,
-      precision: agg.count > 0 ? agg.sum / agg.count : 0,
-    })
-  );
+  const rows: Array<{ recall: number; precision: number }> = Array.from(
+    buckets.entries(),
+  ).map(([recall, agg]) => ({
+    recall,
+    precision: agg.count > 0 ? agg.sum / agg.count : 0,
+  }));
   rows.sort((a, b) => a.recall - b.recall);
   return rows;
 };
@@ -64,7 +70,9 @@ const ConfusionMatrixCard: React.FC<{
     <table className="text-xs min-w-full">
       <thead>
         <tr>
-          <th className="p-2 text-left text-slate-600 dark:text-slate-400">True/Pred</th>
+          <th className="p-2 text-left text-slate-600 dark:text-slate-400">
+            True/Pred
+          </th>
           {classes.map((c) => (
             <th key={c} className="p-2 text-slate-600 dark:text-slate-400">
               {c}
@@ -76,8 +84,13 @@ const ConfusionMatrixCard: React.FC<{
         {cm.map((row, i) => {
           const rowTotal = row.reduce((a, b) => a + b, 0) || 1;
           return (
-            <tr key={`${title}-${i}`} className="border-t border-slate-200 dark:border-slate-700">
-              <td className="p-2 text-slate-700 dark:text-slate-300">{classes[i] ?? i}</td>
+            <tr
+              key={`${title}-${i}`}
+              className="border-t border-slate-200 dark:border-slate-700"
+            >
+              <td className="p-2 text-slate-700 dark:text-slate-300">
+                {classes[i] ?? i}
+              </td>
               {row.map((value, j) => {
                 const normalized = value / rowTotal;
                 const alpha = Math.max(0.08, normalized);
@@ -86,7 +99,11 @@ const ConfusionMatrixCard: React.FC<{
                     ? `rgba(16,185,129,${alpha})`
                     : `rgba(59,130,246,${Math.max(0.04, alpha * 0.7)})`;
                 return (
-                  <td key={`${i}-${j}`} className="p-2 text-center text-slate-700 dark:text-slate-300" style={{ backgroundColor: bg }}>
+                  <td
+                    key={`${i}-${j}`}
+                    className="p-2 text-center text-slate-700 dark:text-slate-300"
+                    style={{ backgroundColor: bg }}
+                  >
                     {value}
                   </td>
                 );
@@ -101,14 +118,22 @@ const ConfusionMatrixCard: React.FC<{
 
 const PerClassTable: React.FC<{
   title: string;
-  rows: Array<{ class_name: string; precision: number; recall: number; f1: number; support: number }>;
+  rows: Array<{
+    class_name: string;
+    precision: number;
+    recall: number;
+    f1: number;
+    support: number;
+  }>;
 }> = ({ title, rows }) => (
   <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-lg p-4 overflow-x-auto">
     <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">{title}</h4>
     <table className="text-xs min-w-full">
       <thead>
         <tr>
-          <th className="p-2 text-left text-slate-600 dark:text-slate-400">Class</th>
+          <th className="p-2 text-left text-slate-600 dark:text-slate-400">
+            Class
+          </th>
           <th className="p-2 text-slate-600 dark:text-slate-400">Precision</th>
           <th className="p-2 text-slate-600 dark:text-slate-400">Recall</th>
           <th className="p-2 text-slate-600 dark:text-slate-400">F1</th>
@@ -117,12 +142,25 @@ const PerClassTable: React.FC<{
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={`${title}-${r.class_name}`} className="border-t border-slate-200 dark:border-slate-700">
-            <td className="p-2 text-slate-700 dark:text-slate-300">{r.class_name}</td>
-            <td className="p-2 text-center text-slate-700 dark:text-slate-300">{toPct(r.precision)}</td>
-            <td className="p-2 text-center text-slate-700 dark:text-slate-300">{toPct(r.recall)}</td>
-            <td className="p-2 text-center text-slate-700 dark:text-slate-300">{toPct(r.f1)}</td>
-            <td className="p-2 text-center text-slate-700 dark:text-slate-300">{r.support}</td>
+          <tr
+            key={`${title}-${r.class_name}`}
+            className="border-t border-slate-200 dark:border-slate-700"
+          >
+            <td className="p-2 text-slate-700 dark:text-slate-300">
+              {r.class_name}
+            </td>
+            <td className="p-2 text-center text-slate-700 dark:text-slate-300">
+              {toPct(r.precision)}
+            </td>
+            <td className="p-2 text-center text-slate-700 dark:text-slate-300">
+              {toPct(r.recall)}
+            </td>
+            <td className="p-2 text-center text-slate-700 dark:text-slate-300">
+              {toPct(r.f1)}
+            </td>
+            <td className="p-2 text-center text-slate-700 dark:text-slate-300">
+              {r.support}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -130,45 +168,65 @@ const PerClassTable: React.FC<{
   </div>
 );
 
-export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> = ({ comparison }) => {
+export const AdvancedMetricsDashboard: React.FC<
+  AdvancedMetricsDashboardProps
+> = ({ comparison }) => {
   const automlThr = comparison.automl.details.threshold_metrics;
   const customThr = comparison.custom.details.threshold_metrics;
   const automlThrSeries = buildThresholdSeries(
     automlThr?.thresholds,
     automlThr?.precision,
     automlThr?.recall,
-    automlThr?.coverage
+    automlThr?.coverage,
   );
   const customThrSeries = buildThresholdSeries(
     customThr?.thresholds,
     customThr?.precision,
     customThr?.recall,
-    customThr?.coverage
+    customThr?.coverage,
   );
 
   const automlPr = buildAvgPrSeries(comparison.automl.details.pr_curves);
   const customPr = buildAvgPrSeries(comparison.custom.details.pr_curves);
 
-  const counts = comparison.automl.details.dataset_counts ?? comparison.custom.details.dataset_counts;
+  const counts =
+    comparison.automl.details.dataset_counts ??
+    comparison.custom.details.dataset_counts;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Train Images</p>
-          <p className="text-2xl text-slate-900 dark:text-white">{counts?.train ?? "N/A"}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Train Images
+          </p>
+          <p className="text-2xl text-slate-900 dark:text-white">
+            {counts?.train ?? "N/A"}
+          </p>
         </div>
         <div className="rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Validation Images</p>
-          <p className="text-2xl text-slate-900 dark:text-white">{counts?.val ?? "N/A"}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Validation Images
+          </p>
+          <p className="text-2xl text-slate-900 dark:text-white">
+            {counts?.val ?? "N/A"}
+          </p>
         </div>
         <div className="rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Test Images</p>
-          <p className="text-2xl text-slate-900 dark:text-white">{counts?.test ?? "N/A"}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Test Images
+          </p>
+          <p className="text-2xl text-slate-900 dark:text-white">
+            {counts?.test ?? "N/A"}
+          </p>
         </div>
         <div className="rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Total Images</p>
-          <p className="text-2xl text-slate-900 dark:text-white">{counts?.total ?? "N/A"}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Total Images
+          </p>
+          <p className="text-2xl text-slate-900 dark:text-white">
+            {counts?.total ?? "N/A"}
+          </p>
         </div>
       </div>
 
@@ -198,7 +256,9 @@ export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> =
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-lg p-4">
-          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">AutoML Precision/Recall by Threshold</h4>
+          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+            AutoML Precision/Recall by Threshold
+          </h4>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={automlThrSeries}>
               <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
@@ -206,14 +266,31 @@ export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> =
               <YAxis domain={[0, 100]} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="precision" stroke="#8b5cf6" dot={false} />
-              <Line type="monotone" dataKey="recall" stroke="#3b82f6" dot={false} />
-              <Line type="monotone" dataKey="coverage" stroke="#10b981" dot={false} />
+              <Line
+                type="monotone"
+                dataKey="precision"
+                stroke="#8b5cf6"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="recall"
+                stroke="#3b82f6"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="coverage"
+                stroke="#10b981"
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-lg p-4">
-          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">Custom ML Precision/Recall by Threshold</h4>
+          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+            Custom ML Precision/Recall by Threshold
+          </h4>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={customThrSeries}>
               <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
@@ -221,9 +298,24 @@ export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> =
               <YAxis domain={[0, 100]} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="precision" stroke="#8b5cf6" dot={false} />
-              <Line type="monotone" dataKey="recall" stroke="#3b82f6" dot={false} />
-              <Line type="monotone" dataKey="coverage" stroke="#10b981" dot={false} />
+              <Line
+                type="monotone"
+                dataKey="precision"
+                stroke="#8b5cf6"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="recall"
+                stroke="#3b82f6"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="coverage"
+                stroke="#10b981"
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -231,26 +323,64 @@ export const AdvancedMetricsDashboard: React.FC<AdvancedMetricsDashboardProps> =
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-lg p-4">
-          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">AutoML Precision-Recall Curve (all classes)</h4>
+          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+            AutoML Precision-Recall Curve (all classes)
+          </h4>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={automlPr}>
               <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-              <XAxis type="number" dataKey="recall" domain={[0, 100]} tickCount={6} allowDecimals={false} />
-              <YAxis type="number" dataKey="precision" domain={[0, 100]} tickCount={6} allowDecimals={false} />
+              <XAxis
+                type="number"
+                dataKey="recall"
+                domain={[0, 100]}
+                tickCount={6}
+                allowDecimals={false}
+              />
+              <YAxis
+                type="number"
+                dataKey="precision"
+                domain={[0, 100]}
+                tickCount={6}
+                allowDecimals={false}
+              />
               <Tooltip />
-              <Line type="monotone" dataKey="precision" stroke="#3b82f6" dot={false} />
+              <Line
+                type="monotone"
+                dataKey="precision"
+                stroke="#3b82f6"
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-lg p-4">
-          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">Custom ML Precision-Recall Curve (all classes)</h4>
+          <h4 className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+            Custom ML Precision-Recall Curve (all classes)
+          </h4>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={customPr}>
               <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-              <XAxis type="number" dataKey="recall" domain={[0, 100]} tickCount={6} allowDecimals={false} />
-              <YAxis type="number" dataKey="precision" domain={[0, 100]} tickCount={6} allowDecimals={false} />
+              <XAxis
+                type="number"
+                dataKey="recall"
+                domain={[0, 100]}
+                tickCount={6}
+                allowDecimals={false}
+              />
+              <YAxis
+                type="number"
+                dataKey="precision"
+                domain={[0, 100]}
+                tickCount={6}
+                allowDecimals={false}
+              />
               <Tooltip />
-              <Line type="monotone" dataKey="precision" stroke="#10b981" dot={false} />
+              <Line
+                type="monotone"
+                dataKey="precision"
+                stroke="#10b981"
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

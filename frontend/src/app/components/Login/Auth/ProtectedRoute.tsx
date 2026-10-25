@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Login } from "../Login";
+import { DEMO_MODE } from "../../../contexts/authConfig";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,7 +10,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
+  if (DEMO_MODE && !isAuthenticated) {
     return <Login />;
   }
 

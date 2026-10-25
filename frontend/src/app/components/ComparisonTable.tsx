@@ -31,7 +31,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
   const customWins = comparison.wins.custom;
   const automlWins = comparison.wins.automl;
-  const summaryParts = comparison.summary.reason.split("|").map((s) => s.trim());
+  const summaryParts = comparison.summary.reason
+    .split("|")
+    .map((s) => s.trim());
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 transition-colors duration-300">
@@ -45,7 +47,10 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
           </p>
         </div>
         {user?.role === "admin" && (
-          <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">
+          <Button
+            onClick={handleExport}
+            className="bg-green-600 hover:bg-green-700"
+          >
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>

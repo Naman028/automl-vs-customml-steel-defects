@@ -14,7 +14,7 @@ type SingleFrameImagePanelProps = {
   capturedImage: string | null;
   scanning: boolean;
   modelSelection: ModelSelection;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  fileInputRef: React.RefObject<HTMLInputElement>;
   onReset: () => void;
   onCameraOpen: () => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;

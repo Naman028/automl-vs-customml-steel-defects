@@ -1,5 +1,5 @@
-import React from 'react';
-import { Brain } from 'lucide-react';
+import React from "react";
+import { Brain } from "lucide-react";
 
 type ExplainabilityInsightsProps = {
   automlAdvantages: string[];

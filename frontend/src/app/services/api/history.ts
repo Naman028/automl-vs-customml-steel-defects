@@ -22,8 +22,8 @@ export const getHistoricalPredictions = (): HistoricalPrediction[] => {
         automlConf > customConf
           ? "AutoML"
           : customConf > automlConf
-          ? "Custom"
-          : "Tie",
+            ? "Custom"
+            : "Tie",
     });
   }
 

@@ -56,12 +56,14 @@ const PREDICTION_CONTEXT_PATTERNS = [
 ];
 
 export function questionUsesPredictionContext(question: string): boolean {
-  return PREDICTION_CONTEXT_PATTERNS.some((pattern) => pattern.test(question.trim()));
+  return PREDICTION_CONTEXT_PATTERNS.some((pattern) =>
+    pattern.test(question.trim()),
+  );
 }
 
 export const askAssistant = async (
   question: string,
-  prediction?: PredictionResult | null
+  prediction?: PredictionResult | null,
 ): Promise<AssistantResponse> => {
   const response = await fetch(`${BACKEND_URL}/assistant`, {
     method: "POST",
@@ -77,7 +79,7 @@ export const askAssistant = async (
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Assistant request failed: ${response.status} - ${errorText}`
+      `Assistant request failed: ${response.status} - ${errorText}`,
     );
   }
 

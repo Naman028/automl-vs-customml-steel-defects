@@ -3,11 +3,14 @@ import { BackendPredictResponse, PredictionResult } from "./types";
 
 // API adapter for inference routes. Keeps backend payload parsing in one place.
 type ModelSelection = "both" | "automl" | "custom";
-type PredictionPair = { automl: PredictionResult | null; custom: PredictionResult | null };
+type PredictionPair = {
+  automl: PredictionResult | null;
+  custom: PredictionResult | null;
+};
 
 async function dataUrlToFile(
   dataUrl: string,
-  filename = "upload.jpg"
+  filename = "upload.jpg",
 ): Promise<File> {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
@@ -16,7 +19,7 @@ async function dataUrlToFile(
 
 function formatPredictionResult(
   backendResult: BackendPredictResponse,
-  modelName: string
+  modelName: string,
 ): PredictionResult {
   const displayName =
     CLASS_MAP[backendResult.predicted_class] || backendResult.predicted_class;
@@ -53,32 +56,44 @@ async function postFormData<T>(url: string, formData: FormData): Promise<T> {
 
 function asModelResult(
   result: BackendPredictResponse | null | undefined,
-  modelName: "AutoML" | "Custom"
+  modelName: "AutoML" | "Custom",
 ): PredictionResult | null {
   return result ? formatPredictionResult(result, modelName) : null;
 }
 
 function mapPredictResponse(
   backendResult: Record<string, any>,
-  modelSelection: ModelSelection
+  modelSelection: ModelSelection,
 ): PredictionPair {
   // `both` mode returns nested `{ custom, automl }`; single-model modes return a flat payload.
   if (backendResult.custom || backendResult.automl) {
     return {
-      custom: asModelResult(backendResult.custom as BackendPredictResponse, "Custom"),
-      automl: asModelResult(backendResult.automl as BackendPredictResponse, "AutoML"),
+      custom: asModelResult(
+        backendResult.custom as BackendPredictResponse,
+        "Custom",
+      ),
+      automl: asModelResult(
+        backendResult.automl as BackendPredictResponse,
+        "AutoML",
+      ),
     };
   }
 
   if (modelSelection === "automl") {
     return {
       custom: null,
-      automl: formatPredictionResult(backendResult as BackendPredictResponse, "AutoML"),
+      automl: formatPredictionResult(
+        backendResult as BackendPredictResponse,
+        "AutoML",
+      ),
     };
   }
 
   return {
-    custom: formatPredictionResult(backendResult as BackendPredictResponse, "Custom"),
+    custom: formatPredictionResult(
+      backendResult as BackendPredictResponse,
+      "Custom",
+    ),
     automl: null,
   };
 }
@@ -97,7 +112,7 @@ function buildErrorPrediction(): PredictionResult {
 
 export const scanImage = async (
   imageData: string,
-  modelSelection: ModelSelection = "both"
+  modelSelection: ModelSelection = "both",
 ): Promise<PredictionPair> => {
   const file = await dataUrlToFile(imageData, "scan.jpg");
   const formData = new FormData();
@@ -105,17 +120,17 @@ export const scanImage = async (
 
   const backendResult = await postFormData<Record<string, any>>(
     `${BACKEND_URL}/predict?model_type=${modelSelection}`,
-    formData
+    formData,
   );
   return mapPredictResponse(backendResult, modelSelection);
 };
 
 export const scanBatchImages = async (
   images: string[],
-  modelSelection: ModelSelection = "both"
+  modelSelection: ModelSelection = "both",
 ): Promise<PredictionPair[]> => {
   const files = await Promise.all(
-    images.map((img, idx) => dataUrlToFile(img, `batch_${idx + 1}.jpg`))
+    images.map((img, idx) => dataUrlToFile(img, `batch_${idx + 1}.jpg`)),
   );
 
   const formData = new FormData();
@@ -123,7 +138,7 @@ export const scanBatchImages = async (
 
   const batchResponse = await postFormData<{ results: Record<string, any>[] }>(
     `${BACKEND_URL}/predict/batch?model_type=${modelSelection}`,
-    formData
+    formData,
   );
 
   return batchResponse.results.map((result) => {

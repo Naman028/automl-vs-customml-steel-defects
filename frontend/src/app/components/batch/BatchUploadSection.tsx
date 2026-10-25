@@ -3,7 +3,7 @@ import { Upload } from "lucide-react";
 import { Button } from "../ui/button";
 
 type BatchUploadSectionProps = {
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  fileInputRef: React.RefObject<HTMLInputElement>;
   onFilesSelected: (files: File[]) => void;
 };
 

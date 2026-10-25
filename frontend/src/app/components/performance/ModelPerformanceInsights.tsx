@@ -1,6 +1,9 @@
 import React from "react";
 import { Clock, TrendingUp, ShieldCheck } from "lucide-react";
-import { ComparisonMetricsResponse, ModelPerformanceMetrics } from "../../services/api";
+import {
+  ComparisonMetricsResponse,
+  ModelPerformanceMetrics,
+} from "../../services/api";
 
 type ModelPerformanceInsightsProps = {
   comparison: ComparisonMetricsResponse;
@@ -16,12 +19,16 @@ export const ModelPerformanceInsights: React.FC<
     comparison.summary.winner === "custom"
       ? "Custom ML"
       : comparison.summary.winner === "automl"
-      ? "AutoML"
-      : "Tie";
-  const accuracyDelta = (customMetrics.accuracy - automlMetrics.accuracy).toFixed(1);
+        ? "AutoML"
+        : "Tie";
+  const accuracyDelta = (
+    customMetrics.accuracy - automlMetrics.accuracy
+  ).toFixed(1);
   const speedup =
     customMetrics.avgInferenceTime > 0
-      ? (automlMetrics.avgInferenceTime / customMetrics.avgInferenceTime).toFixed(2)
+      ? (
+          automlMetrics.avgInferenceTime / customMetrics.avgInferenceTime
+        ).toFixed(2)
       : "N/A";
 
   return (
@@ -59,8 +66,8 @@ export const ModelPerformanceInsights: React.FC<
             {speedup}x
           </strong>{" "}
           ({formatMs(customMetrics.avgInferenceTime)} vs{" "}
-          {formatMs(automlMetrics.avgInferenceTime)}), enabling real-time processing
-          capabilities.
+          {formatMs(automlMetrics.avgInferenceTime)}), enabling real-time
+          processing capabilities.
         </p>
       </div>
 
@@ -76,9 +83,13 @@ export const ModelPerformanceInsights: React.FC<
         <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
           Average confidence difference is{" "}
           <strong className="text-indigo-600 dark:text-indigo-400">
-            {(customMetrics.avgConfidence - automlMetrics.avgConfidence).toFixed(1)}%
+            {(
+              customMetrics.avgConfidence - automlMetrics.avgConfidence
+            ).toFixed(1)}
+            %
           </strong>{" "}
-          (Custom - AutoML), with precision/recall shown in the chart and metric table.
+          (Custom - AutoML), with precision/recall shown in the chart and metric
+          table.
         </p>
       </div>
     </div>

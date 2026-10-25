@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type HistoryWinRateProps = {
   automlWins: number;
@@ -19,12 +19,16 @@ export const HistoryWinRate: React.FC<HistoryWinRateProps> = ({
 
   return (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
-      <h3 className="text-lg text-slate-900 dark:text-white mb-4">Performance Head-to-Head</h3>
+      <h3 className="text-lg text-slate-900 dark:text-white mb-4">
+        Performance Head-to-Head
+      </h3>
 
       <div className="space-y-4">
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-slate-700 dark:text-slate-300">AutoML Model</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300">
+              AutoML Model
+            </span>
             <span className="text-sm text-slate-600 dark:text-slate-400">
               {automlWins} wins ({automlRate.toFixed(1)}%)
             </span>
@@ -39,7 +43,9 @@ export const HistoryWinRate: React.FC<HistoryWinRateProps> = ({
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-slate-700 dark:text-slate-300">Custom Model</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300">
+              Custom Model
+            </span>
             <span className="text-sm text-slate-600 dark:text-slate-400">
               {customWins} wins ({customRate.toFixed(1)}%)
             </span>
@@ -55,7 +61,9 @@ export const HistoryWinRate: React.FC<HistoryWinRateProps> = ({
         {ties > 0 && (
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-700 dark:text-slate-300">Ties</span>
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                Ties
+              </span>
               <span className="text-sm text-slate-600 dark:text-slate-400">
                 {ties} ({tieRate.toFixed(1)}%)
               </span>

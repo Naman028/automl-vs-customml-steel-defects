@@ -1,5 +1,5 @@
-import React from 'react';
-import { Upload } from 'lucide-react';
+import React from "react";
+import { Upload } from "lucide-react";
 
 export const BatchScannerHeader: React.FC = () => {
   return (
@@ -10,7 +10,9 @@ export const BatchScannerHeader: React.FC = () => {
           <Upload className="w-7 h-7 text-white" />
         </div>
         <div>
-          <h2 className="text-2xl text-white tracking-tight">Batch Processing</h2>
+          <h2 className="text-2xl text-white tracking-tight">
+            Batch Processing
+          </h2>
           <p className="text-slate-300 text-sm mt-0.5">
             Process multiple images simultaneously
           </p>

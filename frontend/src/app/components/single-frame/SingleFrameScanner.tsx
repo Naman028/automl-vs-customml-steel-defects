@@ -1,9 +1,5 @@
 import React, { useRef, useState } from "react";
-import {
-  PredictionResult,
-  askAssistant,
-  scanImage,
-} from "../../services/api";
+import { PredictionResult, askAssistant, scanImage } from "../../services/api";
 import { usePredictionHistory } from "../../contexts/PredictionHistoryContext";
 import { createHistoryEntry } from "../../utils/predictionHelpers";
 import { CameraModal } from "./CameraModal";

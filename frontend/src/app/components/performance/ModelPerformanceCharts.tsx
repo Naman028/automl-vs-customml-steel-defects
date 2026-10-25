@@ -29,9 +29,10 @@ export const ModelPerformanceCharts: React.FC<ModelPerformanceChartsProps> = ({
   const maxInference = Math.max(
     automlMetrics.avgInferenceTime,
     customMetrics.avgInferenceTime,
-    1
+    1,
   );
-  const toSpeedScore = (ms: number) => Math.max(0, 100 - (ms / maxInference) * 100);
+  const toSpeedScore = (ms: number) =>
+    Math.max(0, 100 - (ms / maxInference) * 100);
 
   const performanceData = [
     {

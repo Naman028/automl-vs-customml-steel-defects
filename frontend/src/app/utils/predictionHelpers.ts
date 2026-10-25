@@ -1,19 +1,19 @@
-import { PredictionResult, HistoricalPrediction } from '../services/api';
+import { PredictionResult, HistoricalPrediction } from "../services/api";
 
 /**
  * Determines the winner between AutoML and Custom predictions
  */
 export const determineWinner = (
   automl: PredictionResult | null,
-  custom: PredictionResult | null
-): 'AutoML' | 'Custom' | 'Tie' => {
-  if (!automl && !custom) return 'Tie';
-  if (!automl) return 'Custom';
-  if (!custom) return 'AutoML';
-  
-  if (custom.confidence > automl.confidence) return 'Custom';
-  if (automl.confidence > custom.confidence) return 'AutoML';
-  return 'Tie';
+  custom: PredictionResult | null,
+): "AutoML" | "Custom" | "Tie" => {
+  if (!automl && !custom) return "Tie";
+  if (!automl) return "Custom";
+  if (!custom) return "AutoML";
+
+  if (custom.confidence > automl.confidence) return "Custom";
+  if (automl.confidence > custom.confidence) return "AutoML";
+  return "Tie";
 };
 
 /**
@@ -23,12 +23,12 @@ export const createHistoryEntry = (
   imageName: string,
   imageData: string,
   automl: PredictionResult | null,
-  custom: PredictionResult | null
-): Omit<HistoricalPrediction, 'id' | 'timestamp'> => ({
+  custom: PredictionResult | null,
+): Omit<HistoricalPrediction, "id" | "timestamp"> => ({
   imageName,
   imageData,
-  automlDefect: automl?.defect || 'N/A',
-  customDefect: custom?.defect || 'N/A',
+  automlDefect: automl?.defect || "N/A",
+  customDefect: custom?.defect || "N/A",
   automlConfidence: automl?.confidence || 0,
   customConfidence: custom?.confidence || 0,
   automlTime: automl?.time,

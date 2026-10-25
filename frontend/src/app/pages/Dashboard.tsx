@@ -1,8 +1,8 @@
-import React from 'react';
-import { SteelTypes } from '../components/catalog/SteelTypes';
-import { MetalTypes } from '../components/catalog/MetalTypes';
-import { SingleFrameScanner } from '../components/single-frame/SingleFrameScanner';
-import { BatchScanner } from '../components/batch/BatchScanner';
+import React from "react";
+import { SteelTypes } from "../components/catalog/SteelTypes";
+import { MetalTypes } from "../components/catalog/MetalTypes";
+import { SingleFrameScanner } from "../components/single-frame/SingleFrameScanner";
+import { BatchScanner } from "../components/batch/BatchScanner";
 
 export const Dashboard: React.FC = () => {
   return (
@@ -16,10 +16,10 @@ export const Dashboard: React.FC = () => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Metal Types Showcase */}
         <MetalTypes />
-        
+
         {/* Defect Types Showcase */}
         <SteelTypes />
-        
+
         {/* Single Frame Scanner with AI */}
         <SingleFrameScanner />
 

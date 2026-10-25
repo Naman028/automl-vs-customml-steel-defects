@@ -22,7 +22,7 @@ export const Login: React.FC = () => {
     const success = await login(username, password, role);
 
     if (!success) {
-      setError("Invalid credentials. Try: employee/REMOVED_DEMO_CREDENTIAL or admin/REMOVED_DEMO_CREDENTIAL");
+      setError("The supplied demo credentials are not valid.");
     }
 
     setLoading(false);

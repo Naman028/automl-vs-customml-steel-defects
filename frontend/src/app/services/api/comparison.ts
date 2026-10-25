@@ -5,7 +5,7 @@ const isNumberOrNull = (value: unknown): value is number | null =>
   value === null || typeof value === "number";
 
 const validateComparisonMetrics = (
-  payload: unknown
+  payload: unknown,
 ): ComparisonMetricsResponse => {
   if (!payload || typeof payload !== "object") {
     throw new Error("Invalid comparison payload: not an object");
@@ -38,28 +38,31 @@ const validateComparisonMetrics = (
   ];
 
   if (corePaths.some((v) => !isNumberOrNull(v))) {
-    throw new Error("Invalid comparison payload: core metric types are incorrect");
+    throw new Error(
+      "Invalid comparison payload: core metric types are incorrect",
+    );
   }
 
   return p as ComparisonMetricsResponse;
 };
 
-export const getComparisonMetrics =
-  async (signal?: AbortSignal): Promise<ComparisonMetricsResponse> => {
-    const response = await fetch(`${BACKEND_URL}/compare/metrics`, {
-      method: "GET",
-      signal,
-      cache: "no-store",
-      headers: {
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to load comparison metrics: ${response.status} - ${errorText}`
-      );
-    }
-    return validateComparisonMetrics(await response.json());
-  };
+export const getComparisonMetrics = async (
+  signal?: AbortSignal,
+): Promise<ComparisonMetricsResponse> => {
+  const response = await fetch(`${BACKEND_URL}/compare/metrics`, {
+    method: "GET",
+    signal,
+    cache: "no-store",
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to load comparison metrics: ${response.status} - ${errorText}`,
+    );
+  }
+  return validateComparisonMetrics(await response.json());
+};

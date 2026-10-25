@@ -1,9 +1,9 @@
-import React from 'react';
-import { Camera } from 'lucide-react';
-import { Button } from '../ui/button';
+import React from "react";
+import { Camera } from "lucide-react";
+import { Button } from "../ui/button";
 
 type CameraModalPreviewProps = {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.RefObject<HTMLVideoElement>;
   error: string | null;
   scanning: boolean;
   onRetry: () => void;
