@@ -1,5 +1,7 @@
 # AI-Powered Steel Defect Detection System
 
+[![CI](https://github.com/Naman028/automl-vs-customml-steel-defects/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Naman028/automl-vs-customml-steel-defects/actions/workflows/ci.yml)
+
 Compare a custom PyTorch ResNet18 with Google AutoML Vision exported to TensorFlow
 Lite, alongside a separate GC10 multilabel baseline.
 

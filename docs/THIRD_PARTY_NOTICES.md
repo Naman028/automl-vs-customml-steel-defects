@@ -18,8 +18,7 @@ the project MIT licence does not relicense those components.
   package licences and notices. Their versions are recorded in the npm lockfile.
 - Naman Patel trained the AutoML Vision model on Google Cloud (Vertex AI AutoML)
   for a course project, as confirmed by the owner. Optional Vertex API support
-  remains available; local TFLite is the default. The original cloud-job metadata
-  is unavailable, so this provenance statement does not establish training membership.
+  remains available; local TFLite is the default.
 - The GC10 head was trained locally using the existing NEU-trained backbone as a
   frozen feature extractor. It is not presented as an independently authored
   backbone architecture or end-to-end GC10 training.
